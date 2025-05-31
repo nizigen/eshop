@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title>登录</title>
+  <style>
+    .login-container {
+      max-width: 400px;
+      margin: 2rem auto;
+    }
+
+    .login-card {
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-card .card-header {
+      background-color: transparent;
+      border-bottom: none;
+      padding: 1.5rem 1.5rem 0.5rem;
+      text-align: center;
+    }
+
+    .login-card .card-header h4 {
+      margin: 0;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .login-card .card-body {
+      padding: 1.5rem;
+    }
+
+    .form-control {
+      padding: 0.75rem 1rem;
+    }
+
+    .btn-login {
+      padding: 0.75rem;
+      font-weight: 600;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 1rem 0;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .divider span {
+      padding: 0 1rem;
+      color: #6c757d;
+      font-size: 0.875rem;
+    }
+
+    .social-login {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .social-login .btn {
+      padding: 0.5rem 2rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container">
+      <div class="login-container">
+        <div class="card login-card">
+          <div class="card-header">
+            <h4>欢迎回来</h4>
+          </div>
+          <div class="card-body">
+            <!-- 消息提示 -->
+            <div th:replace="~{fragments/message :: message}"></div>
+
+            <!-- 登录表单 -->
+            <form th:action="@{/auth/login}" method="post" class="needs-validation" novalidate>
+              <div class="mb-3">
+                <label for="username" class="form-label">邮箱地址</label>
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-envelope"></i>
+                  </span>
+                  <input type="email" class="form-control" id="username" name="username" required autofocus
+                    placeholder="请输入邮箱">
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label">密码</label>
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-lock"></i>
+                  </span>
+                  <input type="password" class="form-control" id="password" name="password" required
+                    placeholder="请输入密码">
+                </div>
+              </div>
+              <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="remember-me" name="remember-me">
+                <label class="form-check-label" for="remember-me">记住我</label>
+                <a th:href="@{/auth/forgot-password}" class="float-end text-decoration-none">忘记密码？</a>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 btn-login mb-3">
+                登录
+              </button>
+            </form>
+
+            <div class="divider">
+              <span>或者</span>
+            </div>
+
+            <div class="social-login">
+              <button class="btn btn-outline-danger" onclick="alert('微信登录功能开发中')">
+                <i class="fab fa-weixin me-2"></i>微信登录
+              </button>
+            </div>
+
+            <div class="text-center mt-3">
+              <span class="text-muted">还没有账号？</span>
+              <a th:href="@{/auth/register}" class="text-decoration-none">立即注册</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <th:block layout:fragment="scripts">
+    <script>
+      // 表单验证
+      (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms).forEach(function (form) {
+          form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+          }, false)
+        })
+      })()
+    </script>
+  </th:block>
+</body>
+
+</html>

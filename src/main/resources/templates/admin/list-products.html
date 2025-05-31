@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/main}">
+
+<head>
+  <title>商品管理</title>
+  <style>
+    .admin-sidebar {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 5px;
+    }
+
+    .admin-sidebar .nav-link {
+      color: #333;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+
+    .admin-sidebar .nav-link:hover {
+      background-color: #e9ecef;
+    }
+
+    .admin-sidebar .nav-link.active {
+      background-color: #0d6efd;
+      color: white;
+    }
+
+    .admin-sidebar .nav-link i {
+      margin-right: 8px;
+    }
+
+    .product-image {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container-fluid py-4">
+      <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-2">
+          <div class="admin-sidebar">
+            <h5 class="mb-3">管理菜单</h5>
+            <div class="nav flex-column">
+              <a href="/admin/dashboard" class="nav-link">
+                <i class="bi bi-speedometer2"></i> 仪表盘
+              </a>
+              <a href="/admin/users" class="nav-link">
+                <i class="bi bi-people"></i> 用户管理
+              </a>
+              <a href="/admin/users/pending" class="nav-link">
+                <i class="bi bi-person-plus"></i> 待审核用户
+              </a>
+              <a href="/admin/sellers" class="nav-link">
+                <i class="bi bi-shop"></i> 商家管理
+              </a>
+              <a href="/admin/products" class="nav-link active">
+                <i class="bi bi-box"></i> 商品管理
+              </a>
+              <a href="/admin/products/pending" class="nav-link">
+                <i class="bi bi-box-seam"></i> 待审核商品
+              </a>
+              <a href="/admin/orders" class="nav-link">
+                <i class="bi bi-cart"></i> 订单管理
+              </a>
+              <a href="/admin/coupons" class="nav-link">
+                <i class="bi bi-ticket-perforated"></i> 优惠券管理
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-10">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>商品管理</h2>
+          </div>
+
+          <!-- 消息提示 -->
+          <div th:replace="~{fragments/message :: message}"></div>
+
+          <div class="card">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>ID</th>
+                      <th>商品图片</th>
+                      <th>商品名称</th>
+                      <th>卖家</th>
+                      <th>价格</th>
+                      <th>库存</th>
+                      <th>状态</th>
+                      <th>创建时间</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:if="${products.isEmpty()}">
+                      <td colspan="9" class="text-center py-4">暂无商品数据</td>
+                    </tr>
+                    <tr th:each="product : ${products}">
+                      <td th:text="${product.id}"></td>
+                      <td>
+                        <img th:if="${not #lists.isEmpty(product.images)}"
+                          th:src="${product.getPrimaryImage().getDisplayUrl()}" alt="商品图片" class="product-image">
+                        <span th:if="${#lists.isEmpty(product.images)}" class="text-muted">
+                          <i class="bi bi-image"></i>
+                        </span>
+                      </td>
+                      <td th:text="${product.name}"></td>
+                      <td>
+                        <div class="d-flex align-items-center">
+
+                          <span th:text="${product.seller?.username ?: 'N/A'}"></span>
+                        </div>
+                      </td>
+                      <td th:text="${#numbers.formatDecimal(product.price, 1, 2)}"></td>
+                      <td th:text="${product.quantity}"></td>
+                      <td>
+                        <span th:switch="${product.status}">
+                          <span th:case="${T(com.example.eshop.model.ProductStatus).ACTIVE}"
+                            class="badge bg-success">在售</span>
+                          <span th:case="${T(com.example.eshop.model.ProductStatus).PENDING_APPROVAL}"
+                            class="badge bg-warning text-dark">待审核</span>
+                          <span th:case="${T(com.example.eshop.model.ProductStatus).REJECTED}"
+                            class="badge bg-danger">已拒绝</span>
+                          <span th:case="${T(com.example.eshop.model.ProductStatus).SOLD_OUT}"
+                            class="badge bg-secondary">已售罄</span>
+                          <span th:case="*" class="badge bg-light text-dark" th:text="${product.status}"></span>
+                        </span>
+                      </td>
+                      <td th:text="${#temporals.format(product.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                      <td>
+                        <div class="btn-group">
+                          <a th:href="@{/products/{id}(id=${product.id})}" class="btn btn-info btn-sm">
+                            <i class="bi bi-eye"></i>
+                          </a>
+                          <form th:if="${product.status.name() == 'PENDING_APPROVAL'}"
+                            th:action="@{/admin/products/approve/{id}(id=${product.id})}" method="post"
+                            class="d-inline">
+                            <button type="submit" class="btn btn-success btn-sm">
+                              <i class="bi bi-check-lg"></i>
+                            </button>
+                          </form>
+                          <form th:if="${product.status.name() == 'PENDING_APPROVAL'}"
+                            th:action="@{/admin/products/reject/{id}(id=${product.id})}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                              <i class="bi bi-x-lg"></i>
+                            </button>
+                          </form>
+                          <form th:action="@{/admin/products/delete/{id}(id=${product.id})}" method="post"
+                            class="d-inline" onsubmit="return confirm('确定要删除这个商品吗？此操作无法撤销。');">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

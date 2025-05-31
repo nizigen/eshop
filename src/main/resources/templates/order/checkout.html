@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+  <meta charset="UTF-8">
+  <title>结算页面</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    .address-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+
+    .address-card.selected {
+      border-color: #0d6efd;
+      background-color: #f8f9fa;
+    }
+
+    .payment-method {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+
+    .payment-method.selected {
+      border-color: #0d6efd;
+      background-color: #f8f9fa;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container py-5">
+    <h2 class="mb-4">订单结算</h2>
+
+    <!-- 收货地址 -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">收货地址</h5>
+      </div>
+      <div class="card-body">
+        <div th:if="${addresses.empty}" class="alert alert-warning">
+          您还没有添加收货地址，请先添加地址
+        </div>
+        <div class="row" th:unless="${addresses.empty}">
+          <div class="col-md-6 mb-3" th:each="address : ${addresses}">
+            <div class="address-card" th:data-id="${address.id}">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h6 th:text="${address.receiverName}">收货人</h6>
+                  <p class="mb-1" th:text="${address.receiverPhone}">电话</p>
+                  <p class="mb-0"
+                    th:text="${address.shippingProvince + address.shippingCity + address.shippingDistrict + address.detailedAddress}">
+                    地址</p>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="addressId" th:value="${address.id}"
+                    th:checked="${address.isDefault}">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <a href="/user/addresses/new" class="btn btn-outline-primary">添加新地址</a>
+      </div>
+    </div>
+
+    <!-- 交易方式 -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">交易方式</h5>
+      </div>
+      <div class="card-body">
+        <div class="payment-method" data-type="online">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="shippingType" value="online" checked>
+            <label class="form-check-label">
+              <i class="bi bi-credit-card"></i> 在线支付
+            </label>
+          </div>
+        </div>
+        <div class="payment-method" data-type="offline">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="shippingType" value="offline">
+            <label class="form-check-label">
+              <i class="bi bi-cash"></i> 线下交易
+            </label>
+          </div>
+          <div class="offline-details mt-3" style="display: none;">
+            <div class="mb-3">
+              <label class="form-label">约定交易地点</label>
+              <input type="text" class="form-control" name="offlineLocation" placeholder="请输入约定交易地点">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">约定交易时间</label>
+              <input type="text" class="form-control" name="offlineTime" placeholder="请输入约定交易时间">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 支付信息 -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">支付信息</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>钱包余额：</span>
+            <span th:text="${walletBalance}">0.00</span>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>可用积分：</span>
+            <span th:text="${availablePoints}">0</span>
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="usePoints" name="usePoints">
+            <label class="form-check-label" for="usePoints">
+              使用积分抵扣
+            </label>
+          </div>
+          <input type="hidden" id="pointsToUse" name="pointsToUse" value="0">
+        </div>
+        <!-- 添加优惠券选择 -->
+        <div class="form-group">
+          <label>选择优惠券</label>
+          <select class="form-control" id="couponSelect" name="userCouponId">
+            <option value="">不使用优惠券</option>
+            <th:block th:each="coupon : ${userCoupons}">
+              <option th:value="${coupon.id}"
+                th:disabled="${coupon.status == 'USED' || totalAmount < coupon.minPurchase}"
+                th:text="${coupon.name + ' - ' + coupon.value + (coupon.type == 'PERCENTAGE' ? '%' : '元') + ' (满' + coupon.minPurchase + '元可用)'}">
+              </option>
+            </th:block>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 订单金额（全部由后端渲染） -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">订单金额</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+          <span>商品总额：</span>
+          <span th:text="${totalAmount}">0.00</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span>积分抵扣：</span>
+          <span id="pointsDeduction" th:text="${pointsDeduction != null ? pointsDeduction : 0}">0.00</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span>优惠券折扣：</span>
+          <span id="couponDiscount" th:text="${couponDiscount != null ? couponDiscount : 0}">0.00</span>
+        </div>
+        <hr>
+        <div class="d-flex justify-content-between">
+          <strong>应付金额：</strong>
+          <strong id="finalAmount" th:text="${finalAmount != null ? finalAmount : totalAmount}">0.00</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- 提交订单 -->
+    <div class="text-end">
+      <button type="submit" class="btn btn-primary btn-lg" id="submitOrder">提交订单</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script th:inline="javascript">
+    // 获取后端传递的数据
+    const totalAmount = /*[[${totalAmount}]]*/ 0;
+    const availablePoints = /*[[${availablePoints}]]*/ 0;
+    const userCoupons = JSON.parse(/*[[${userCouponsJson}]]*/ '[]');
+
+    // 初始化页面
+    document.addEventListener('DOMContentLoaded', function () {
+      // 初始化金额显示
+      updateAmount();
+
+      // 监听积分使用复选框变化
+      document.getElementById('usePoints').addEventListener('change', function () {
+        updateAmount();
+      });
+
+      // 监听优惠券选择变化
+      document.getElementById('couponSelect').addEventListener('change', function () {
+        updateAmount();
+      });
+
+      // 监听配送方式变化
+      document.querySelectorAll('input[name="shippingType"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+          const offlineDetails = document.querySelector('.offline-details');
+          offlineDetails.style.display = this.value === 'offline' ? 'block' : 'none';
+        });
+      });
+    });
+
+    // 更新金额显示
+    function updateAmount () {
+      const usePoints = document.getElementById('usePoints').checked;
+      let pointsDeduction = 0;
+      let pointsToUse = 0;
+
+      if (usePoints) {
+        // 计算可用的最大积分（不超过订单总额）
+        pointsToUse = Math.min(availablePoints, Math.floor(totalAmount * 100));
+        // 计算积分抵扣金额（100积分=1元）
+        pointsDeduction = pointsToUse * 0.01;
+      }
+
+      // 获取选中的优惠券
+      const selectedCouponId = document.getElementById('couponSelect').value;
+      const selectedCoupon = userCoupons.find(c => String(c.id) === String(selectedCouponId));
+      let couponDiscount = 0;
+
+      if (selectedCoupon) {
+        if (selectedCoupon.type === 'FIXED' && totalAmount >= selectedCoupon.minPurchase) {
+          couponDiscount = Number(selectedCoupon.value);
+        } else if (selectedCoupon.type === 'PERCENTAGE' && totalAmount >= selectedCoupon.minPurchase) {
+          couponDiscount = totalAmount * (Number(selectedCoupon.value) / 100);
+        }
+      }
+
+      // 计算最终金额（商品总额 - 积分抵扣 - 优惠券折扣）
+      const finalAmount = Math.max(0, totalAmount - pointsDeduction - couponDiscount);
+
+      // 更新显示
+      document.getElementById('pointsDeduction').textContent = pointsDeduction.toFixed(2);
+      document.getElementById('couponDiscount').textContent = couponDiscount.toFixed(2);
+      document.getElementById('finalAmount').textContent = finalAmount.toFixed(2);
+
+      // 更新隐藏的积分使用量字段
+      document.getElementById('pointsToUse').value = pointsToUse;
+    }
+
+    // 提交订单
+    document.getElementById('submitOrder').addEventListener('click', function () {
+      const selectedAddress = document.querySelector('input[name="addressId"]:checked');
+      if (!selectedAddress) {
+        alert('请选择收货地址');
+        return;
+      }
+
+      const shippingType = document.querySelector('input[name="shippingType"]:checked').value;
+      if (shippingType === 'offline') {
+        const location = document.querySelector('input[name="offlineLocation"]').value;
+        const time = document.querySelector('input[name="offlineTime"]').value;
+        if (!location || !time) {
+          alert('请填写线下交易信息');
+          return;
+        }
+      }
+
+      const usePoints = document.getElementById('usePoints').checked;
+      const pointsToUse = usePoints ? parseInt(document.getElementById('pointsToUse').value) : 0;
+      const selectedCouponId = document.getElementById('couponSelect').value;
+
+      const orderData = {
+        addressId: selectedAddress.value,
+        shippingType: shippingType,
+        usePoints: usePoints,
+        pointsToUse: pointsToUse,
+        userCouponId: selectedCouponId || null,
+        offlineLocation: shippingType === 'offline' ? document.querySelector('input[name="offlineLocation"]').value : null,
+        offlineTime: shippingType === 'offline' ? document.querySelector('input[name="offlineTime"]').value : null,
+        quantity: 1
+      };
+
+      axios.post('/orders/create', orderData)
+        .then(response => {
+          if (response.data.success) {
+            window.location.href = '/orders/' + response.data.data.id;
+          } else {
+            alert(response.data.message);
+          }
+        })
+        .catch(error => {
+          alert(error.response?.data?.message || '创建订单失败');
+        });
+    });
+  </script>
+</body>
+
+</html>

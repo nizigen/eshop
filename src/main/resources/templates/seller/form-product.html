@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/main}">
+
+<head>
+  <title th:text="${product.id == null ? '发布新商品' : '编辑商品'}">商品表单</title>
+  <style>
+    .image-preview {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      margin: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .image-preview-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .image-preview-container .remove-image {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: #dc3545;
+      color: white;
+      border-radius: 50%;
+      padding: 5px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .primary-image-badge {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      background: rgba(25, 135, 84, 0.9);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .set-primary-btn {
+      position: absolute;
+      bottom: 5px;
+      left: 5px;
+      background: rgba(13, 110, 253, 0.9);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .set-primary-btn:hover {
+      background: rgba(13, 110, 253, 1);
+    }
+
+    #imagePreviewContainer img {
+      transition: transform 0.2s;
+    }
+
+    #imagePreviewContainer img:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container-fluid">
+      <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-2">
+          <div class="list-group">
+            <a href="/seller/dashboard" class="list-group-item list-group-item-action">
+              <i class="bi bi-speedometer2"></i> 商家首页
+            </a>
+            <a href="/seller/products" class="list-group-item list-group-item-action active">
+              <i class="bi bi-box"></i> 商品管理
+            </a>
+            <a href="/seller/orders" class="list-group-item list-group-item-action">
+              <i class="bi bi-cart"></i> 订单管理
+            </a>
+            <a href="/seller/orders/pending" class="list-group-item list-group-item-action">
+              <i class="bi bi-clock"></i> 待处理订单
+            </a>
+            <a href="/seller/orders/pending-returns" class="list-group-item list-group-item-action">
+              <i class="bi bi-arrow-return-left"></i> 退货管理
+            </a>
+            <a href="/seller/reviews" class="list-group-item list-group-item-action">
+              <i class="bi bi-star"></i> 商品评价
+            </a>
+            <a href="/seller/profile" class="list-group-item list-group-item-action">
+              <i class="bi bi-gear"></i> 店铺设置
+            </a>
+          </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-10">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 th:text="${product.id == null ? '发布新商品' : '编辑商品'}">商品表单</h2>
+            <a href="/seller/products" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left"></i> 返回商品列表
+            </a>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <form
+                th:action="@{${product.id == null ? '/seller/products/save' : '/seller/products/update/' + product.id}}"
+                method="post" enctype="multipart/form-data" th:object="${product}">
+
+                <!-- Basic Information -->
+                <div class="row mb-4">
+                  <div class="col-md-8">
+                    <h5 class="card-title mb-3">基本信息</h5>
+                    <div class="mb-3">
+                      <label for="name" class="form-label">商品名称 <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="name" th:field="*{name}" required
+                        th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
+                      <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">
+                        Name Error
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="category" class="form-label">商品分类 <span class="text-danger">*</span></label>
+                      <select class="form-select" id="category" th:field="*{category}" required
+                        th:classappend="${#fields.hasErrors('category')} ? 'is-invalid'">
+                        <option value="">选择分类</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}">Category Name
+                        </option>
+                      </select>
+                      <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}" th:errors="*{category}">
+                        Category Error
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="description" class="form-label">商品描述</label>
+                      <textarea class="form-control" id="description" th:field="*{description}" rows="4"
+                        th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"></textarea>
+                      <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}"
+                        th:errors="*{description}">
+                        Description Error
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <h5 class="card-title mb-3">商品图片</h5>
+                    <div class="mb-3">
+                      <label for="newImageFiles" class="form-label">上传图片</label>
+                      <input type="file" class="form-control" id="newImageFiles" name="newImageFiles" multiple
+                        accept="image/*">
+                      <small class="text-muted">可以选择多张图片，建议尺寸800x800像素</small>
+                    </div>
+
+                    <!-- Image Preview -->
+                    <div id="imagePreviewContainer" class="mt-3">
+                      <div th:each="image : ${product.images}" class="image-preview-container">
+                        <img th:src="@{/images/{path}(path=${image.imagePath})}" class="image-preview"
+                          th:alt="${product.name}">
+                        <span th:if="${image.isPrimary}" class="primary-image-badge">主图</span>
+                        <button th:unless="${image.isPrimary}" type="button" class="set-primary-btn"
+                          th:onclick="'setPrimaryImage(' + ${image.id} + ')'">设为主图</button>
+                        <span class="remove-image" th:onclick="'removeImage(' + ${image.id} + ')'">&times;</span>
+                        <input type="hidden" name="imagesToDelete" th:value="${image.id}" disabled>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Price and Stock -->
+                <div class="row mb-4">
+                  <div class="col-12">
+                    <h5 class="card-title mb-3">价格与库存</h5>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label for="originalPrice" class="form-label">原价 <span class="text-danger">*</span></label>
+                      <div class="input-group">
+                        <span class="input-group-text">¥</span>
+                        <input type="number" class="form-control" id="originalPrice" th:field="*{originalPrice}"
+                          required step="0.01" min="0"
+                          th:classappend="${#fields.hasErrors('originalPrice')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('originalPrice')}"
+                          th:errors="*{originalPrice}">
+                          Original Price Error
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label for="discountPrice" class="form-label">折扣价</label>
+                      <div class="input-group">
+                        <span class="input-group-text">¥</span>
+                        <input type="number" class="form-control" id="discountPrice" th:field="*{discountPrice}"
+                          step="0.01" min="0" th:classappend="${#fields.hasErrors('discountPrice')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('discountPrice')}"
+                          th:errors="*{discountPrice}">
+                          Discount Price Error
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label for="quantity" class="form-label">库存数量 <span class="text-danger">*</span></label>
+                      <input type="number" class="form-control" id="quantity" th:field="*{quantity}" required min="0"
+                        th:classappend="${#fields.hasErrors('quantity')} ? 'is-invalid'">
+                      <div class="invalid-feedback" th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}">
+                        Quantity Error
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label for="size" class="form-label">尺寸规格</label>
+                      <input type="text" class="form-control" id="size" th:field="*{size}"
+                        th:classappend="${#fields.hasErrors('size')} ? 'is-invalid'">
+                      <div class="invalid-feedback" th:if="${#fields.hasErrors('size')}" th:errors="*{size}">
+                        Size Error
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="row mb-4">
+                  <div class="col-12">
+                    <h5 class="card-title mb-3">其他信息</h5>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="itemCondition" class="form-label">商品成色 <span class="text-danger">*</span></label>
+                      <select class="form-select" id="itemCondition" th:field="*{itemCondition}" required
+                        th:classappend="${#fields.hasErrors('itemCondition')} ? 'is-invalid'">
+                        <option value="">选择成色</option>
+                        <option value="NEW">全新</option>
+                        <option value="LIKE_NEW">九成新</option>
+                        <option value="GOOD">八成新</option>
+                        <option value="FAIR">七成新</option>
+                        <option value="POOR">六成新及以下</option>
+                      </select>
+                      <div class="invalid-feedback" th:if="${#fields.hasErrors('itemCondition')}"
+                        th:errors="*{itemCondition}">
+                        Condition Error
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label d-block">价格设置</label>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="negotiable" th:field="*{negotiable}">
+                        <label class="form-check-label" for="negotiable">
+                          允许买家议价
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="row">
+                  <div class="col-12">
+                    <hr>
+                    <button type="submit" class="btn btn-primary">
+                      <i class="bi bi-check-lg"></i>
+                      <span th:text="${product.id == null ? '发布商品' : '保存修改'}">Submit</span>
+                    </button>
+                    <a href="/seller/products" class="btn btn-secondary">取消</a>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 页面特定的脚本 -->
+  <th:block layout:fragment="scripts">
+    <script>
+      function setPrimaryImage (imageId) {
+        fetch(`/seller/products/images/${imageId}/set-primary`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
+          }
+        }).then(response => {
+          if (response.ok) {
+            location.reload();
+          }
+        });
+      }
+
+      function removeImage (imageId) {
+        if (confirm('确定要删除这张图片吗？')) {
+          const input = document.querySelector(`input[name="imagesToDelete"][value="${imageId}"]`);
+          input.disabled = false;
+          input.parentElement.style.display = 'none';
+        }
+      }
+
+      // 预览新上传的图片
+      document.getElementById('newImageFiles').addEventListener('change', function (e) {
+        const container = document.getElementById('imagePreviewContainer');
+        const files = e.target.files;
+
+        for (let file of files) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const div = document.createElement('div');
+            div.className = 'image-preview-container';
+            div.innerHTML = `
+              <img src="${e.target.result}" class="image-preview" alt="Preview">
+              <span class="text-muted" style="position: absolute; bottom: 5px; left: 5px;">待上传</span>
+            `;
+            container.appendChild(div);
+          }
+          reader.readAsDataURL(file);
+        }
+      });
+    </script>
+  </th:block>
+</body>
+
+</html>

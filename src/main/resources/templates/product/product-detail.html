@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+  layout:decorate="~{layouts/main}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head>
+  <title th:text="${product.name}">商品详情</title>
+  <style>
+    .product-info {
+      border-bottom: 1px solid #eee;
+      padding: 15px 0;
+    }
+
+    .price-tag {
+      font-size: 24px;
+      color: #e4393c;
+    }
+
+    .original-price {
+      text-decoration: line-through;
+      color: #999;
+      margin-left: 10px;
+    }
+
+    .condition-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-right: 8px;
+    }
+
+    .condition-NEW {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .condition-LIKE_NEW {
+      background-color: #17a2b8;
+      color: white;
+    }
+
+    .condition-VERY_GOOD {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .condition-GOOD {
+      background-color: #ffc107;
+    }
+
+    .condition-ACCEPTABLE {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .seller-info {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+
+    .rating-stars {
+      color: #ffc107;
+    }
+
+    .review-item {
+      border-bottom: 1px solid #eee;
+      padding: 10px 0;
+    }
+
+    .sales-info {
+      background-color: #f1f8ff;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container">
+      <div class="row">
+        <!-- 左侧商品图片 -->
+        <div class="col-md-6">
+          <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+              <div th:each="image, stat : ${product.images}"
+                th:class="${'carousel-item' + (stat.first ? ' active' : '')}">
+                <img th:src="${image.imageUrl}" class="d-block w-100" alt="商品图片">
+              </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          </div>
+
+          <!-- 缩略图 -->
+          <div class="row mt-2">
+            <div class="col-3" th:each="image : ${product.images}">
+              <img th:src="${image.imageUrl}" class="img-thumbnail" style="cursor: pointer;"
+                onclick="$('#productCarousel').carousel($('.carousel-item').index(this))">
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧商品信息 -->
+        <div class="col-md-6">
+          <div class="product-info">
+            <h2 th:text="${product.name}">商品名称</h2>
+            <div class="mt-2">
+              <span th:class="'condition-tag condition-' + ${product.itemCondition}"
+                th:text="${product.itemCondition}">商品成色</span>
+              <span th:if="${product.negotiable}" class="badge bg-info">可议价</span>
+            </div>
+          </div>
+
+          <div class="product-info">
+            <div class="price-tag">
+              ¥<span th:text="${#numbers.formatDecimal(product.discountPrice, 1, 2)}">0.00</span>
+              <span class="original-price" th:if="${product.originalPrice != null}">
+                ¥<span th:text="${#numbers.formatDecimal(product.originalPrice, 1, 2)}">0.00</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="product-info">
+            <div class="sales-info">
+              <div class="row">
+                <div class="col-4 text-center">
+                  <div class="h4" th:text="${product.salesCount}">0</div>
+                  <div class="text-muted">历史销量</div>
+                </div>
+                <div class="col-4 text-center">
+                  <div class="h4" th:text="${product.quantity}">0</div>
+                  <div class="text-muted">剩余库存</div>
+                </div>
+                <div class="col-4 text-center">
+                  <div class="h4" th:text="${#numbers.formatDecimal(product.averageRating, 1, 1)}">5.0</div>
+                  <div class="text-muted">平均评分</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="seller-info">
+            <div class="d-flex align-items-center mb-2">
+              <img th:if="${product.seller.avatarUrl != null}" th:src="@{'/uploads/' + ${product.seller.avatarUrl}}"
+                class="rounded-circle" width="40" height="40" alt="卖家头像">
+              <i th:if="${product.seller.avatarUrl == null}" class="bi bi-shop"></i>
+              <div class="ms-2">
+                <h5 class="mb-0" th:text="${product.seller.name}">卖家名称</h5>
+                <div class="text-muted">
+                  <small>好评率: <span th:text="${product.seller.buyerPositiveRatingPercent + '%'}">98%</span></small>
+                </div>
+              </div>
+            </div>
+            <div class="row text-center">
+              <div class="col-4">
+                <div>商品数</div>
+                <div th:text="${sellerProductCount}">0</div>
+              </div>
+              <div class="col-4">
+                <div>信用等级</div>
+                <div th:text="${product.seller.level}">1</div>
+              </div>
+              <div class="col-4">
+                <div>服务评分</div>
+                <div class="rating-stars">
+                  <i class="bi bi-star-fill"></i>
+                  <span th:text="${product.seller.serviceRating}">5.0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 商品描述 -->
+          <div class="product-info">
+            <h5>商品描述</h5>
+            <p class="text-muted" th:text="${product.description}">商品描述</p>
+            <div class="mt-2">
+              <span class="me-3"><i class="bi bi-box-seam"></i> 尺寸：<span th:text="${product.size}">-</span></span>
+              <span><i class="bi bi-tag"></i> 分类：<span th:text="${product.category.name}">-</span></span>
+            </div>
+          </div>
+
+          <!-- 商品操作按钮 -->
+          <div class="mt-4">
+            <!-- 已登录用户显示加入购物车和立即购买按钮 -->
+            <form th:if="${#authorization.expression('isAuthenticated()')}" class="d-flex gap-2"
+              th:action="@{/cart/add}" method="post" id="addToCartForm" onsubmit="return handleFormSubmit(event)">
+              <div class="input-group">
+                <input type="number" id="quantity" name="quantity" value="1" min="1" th:max="${product.quantity}"
+                  class="form-control" style="width: 80px;">
+                <input type="hidden" name="productId" th:value="${product.id}">
+                <button type="submit" class="btn btn-primary" th:disabled="${product.quantity <= 0}">
+                  <i class="bi bi-cart-plus"></i> 加入购物车
+                </button>
+                <a th:href="@{'/orders/checkout?productId=' + ${product.id} + '&quantity=1'}" class="btn btn-danger"
+                  th:disabled="${product.quantity <= 0}">
+                  <i class="bi bi-lightning-fill"></i> 立即购买
+                </a>
+              </div>
+            </form>
+
+            <!-- 未登录用户显示匿名购物车按钮 -->
+            <div th:if="${!#authorization.expression('isAuthenticated()')}" class="d-flex gap-2">
+              <div class="input-group">
+                <input type="number" id="anonymousQuantity" value="1" min="1" th:max="${product.quantity}"
+                  class="form-control" style="width: 80px;">
+                <button type="button" onclick="handleAnonymousAddToCart()" class="btn btn-primary"
+                  th:disabled="${product.quantity <= 0}">
+                  <i class="bi bi-cart-plus"></i> 加入购物车
+                </button>
+                <a href="/login" class="btn btn-danger" th:disabled="${product.quantity <= 0}">
+                  <i class="bi bi-lightning-fill"></i> 登录后购买
+                </a>
+              </div>
+            </div>
+
+            <!-- 其他按钮 -->
+            <div class="mt-3">
+              <a href="#" class="btn btn-outline-primary me-2"
+                th:if="${#authorization.expression('isAuthenticated()')}">
+                <i class="bi bi-heart"></i> 收藏
+              </a>
+              <a th:href="@{'/chat/' + ${product.seller.id}}" class="btn btn-outline-success me-2"
+                th:if="${#authorization.expression('isAuthenticated()')}">
+                <i class="bi bi-chat-dots"></i> 联系卖家
+              </a>
+              <a href="/login" class="btn btn-outline-primary me-2"
+                th:unless="${#authorization.expression('isAuthenticated()')}">
+                <i class="bi bi-heart"></i> 登录后收藏
+              </a>
+              <a href="/login" class="btn btn-outline-success me-2"
+                th:unless="${#authorization.expression('isAuthenticated()')}">
+                <i class="bi bi-chat-dots"></i> 登录后联系卖家
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 评价信息 -->
+      <div class="row mt-5">
+        <div class="col-12">
+          <h3>商品评价</h3>
+          <div class="review-list">
+            <div th:each="review : ${reviews}" class="review-item">
+              <div class="d-flex justify-content-between">
+                <div class="d-flex align-items-center">
+                  <img th:if="${review.user.avatarUrl != null}" th:src="@{'/uploads/' + ${review.user.avatarUrl}}"
+                    class="rounded-circle" width="32" height="32" alt="用户头像">
+                  <i th:if="${review.user.avatarUrl == null}" class="bi bi-person-circle"></i>
+                  <span class="ms-2" th:text="${review.user.name}">用户名</span>
+                </div>
+                <div class="rating-stars">
+                  <th:block th:each="i : ${#numbers.sequence(1, review.productRating > 5 ? 5 : review.productRating)}">
+                    <i class="bi bi-star-fill"></i>
+                  </th:block>
+                </div>
+              </div>
+              <div class="mt-2" th:text="${review.productComment}">评价内容</div>
+              <div class="text-muted mt-1">
+                <small th:text="${#temporals.format(review.createdAt, 'yyyy-MM-dd HH:mm')}">评价时间</small>
+              </div>
+              <!-- 卖家回复 -->
+              <div class="seller-reply mt-2" th:if="${review.sellerReply != null}">
+                <div class="bg-light p-2 rounded">
+                  <strong>卖家回复：</strong>
+                  <span th:text="${review.sellerReply}">回复内容</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 商品数据 -->
+  <script th:inline="javascript">
+    const product = {
+      id: /*[[${product.id}]]*/ null,
+      name: /*[[${product.name}]]*/ null,
+      price: /*[[${product.discountPrice}]]*/ null,
+      imageUrl: /*[[${product.images != null && !product.images.empty ? product.images[0].imageUrl : ''}]]*/ null
+    };
+
+    // 添加 Toast 函数
+    function showToast (message) {
+      const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+      const toast = document.createElement('div');
+      toast.className = 'toast align-items-center text-white bg-success border-0';
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.setAttribute('aria-atomic', 'true');
+
+      toast.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">
+            ${message}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      `;
+
+      toastContainer.appendChild(toast);
+      const bsToast = new bootstrap.Toast(toast);
+      bsToast.show();
+
+      // 自动移除已关闭的 toast
+      toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+      });
+    }
+
+    // 创建 Toast 容器
+    function createToastContainer () {
+      const container = document.createElement('div');
+      container.id = 'toastContainer';
+      container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+      document.body.appendChild(container);
+      return container;
+    }
+
+    function handleFormSubmit (event) {
+      event.preventDefault();
+      const form = event.target;
+      const quantity = parseInt(document.getElementById('quantity').value) || 1;
+      if (quantity > /*[[${product.quantity}]]*/ 0) {
+        showToast('购买数量不能超过库存数量');
+        return false;
+      }
+      const formData = new URLSearchParams(new FormData(form));
+      const isBuyNow = document.activeElement && document.activeElement.getAttribute('formaction');
+      fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        body: formData
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            if (isBuyNow) {
+              window.location.href = document.activeElement.getAttribute('formaction');
+            } else {
+              showToast('已添加到购物车');
+            }
+          } else {
+            showToast(data.message || '添加失败，请重试');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('添加失败，请重试');
+        });
+      return false;
+    }
+
+    function handleAnonymousAddToCart () {
+      const quantity = parseInt(document.getElementById('anonymousQuantity').value) || 1;
+      if (quantity > /*[[${product.quantity}]]*/ 0) {
+        showToast('购买数量不能超过库存数量');
+        return;
+      }
+      const formData = new URLSearchParams();
+      formData.append('productId', product.id);
+      formData.append('quantity', quantity);
+      fetch('/cart/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        body: formData
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showToast('已添加到购物车');
+          } else {
+            showToast(data.message || '添加失败，请重试');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('添加失败，请重试');
+        });
+    }
+  </script>
+</body>
+
+</html>

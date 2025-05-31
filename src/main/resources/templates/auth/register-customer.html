@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>买家注册</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" th:href="@{/css/seller.css}">
+  <style>
+    .required:after {
+      content: " *";
+      color: red;
+    }
+
+    .section-title {
+      border-bottom: 2px solid #e9ecef;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.5rem;
+      color: #495057;
+    }
+
+    .captcha-image {
+      cursor: pointer;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body class="bg-light">
+  <div layout:fragment="content">
+    <div class="container">
+      <div class="row justify-content-center mt-5">
+        <div class="col-md-8">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h3 class="card-title text-center mb-4">买家注册</h3>
+
+              <!-- Alert Messages -->
+              <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+              <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+
+              <form th:action="@{/auth/register-customer}" method="post" class="needs-validation" novalidate
+                th:object="${customerDto}" enctype="multipart/form-data">
+                <!-- Personal Information Section -->
+                <h5 class="section-title">个人信息</h5>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="name" class="form-label required">姓名</label>
+                    <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">
+                      请输入姓名
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="phone" class="form-label required">手机号</label>
+                    <input type="tel" class="form-control" id="phone" th:field="*{phone}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">
+                      请输入有效的手机号
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="email" class="form-label required">邮箱</label>
+                    <input type="email" class="form-control" id="email" th:field="*{email}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">
+                      请输入有效的邮箱地址
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="city" class="form-label">城市</label>
+                    <input type="text" class="form-control" id="city" th:field="*{city}">
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('city')}" th:errors="*{city}">
+                      请输入城市
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="gender" class="form-label">性别</label>
+                    <select class="form-select" id="gender" th:field="*{gender}">
+                      <option value="">请选择...</option>
+                      <option value="MALE">男</option>
+                      <option value="FEMALE">女</option>
+                      <option value="OTHER">其他</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="bankAccountNumber" class="form-label required">银行账号</label>
+                    <input type="text" class="form-control" id="bankAccountNumber" th:field="*{bankAccountNumber}"
+                      required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('bankAccountNumber')}"
+                      th:errors="*{bankAccountNumber}">
+                      请输入有效的银行账号
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="idCardFile" class="form-label required">身份证照片</label>
+                    <input type="file" class="form-control" id="idCardFile" name="idCardFile" required
+                      accept="image/jpeg,image/png,application/pdf">
+                    <div class="form-text">支持 JPG、PNG、PDF 格式，大小不超过5MB</div>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('idCardFile')}" th:errors="*{idCardFile}">
+                      请上传身份证照片
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Account Information Section -->
+                <h5 class="section-title mt-4">账号信息</h5>
+                <div class="row">
+                  <div class="col-md-12 mb-3">
+                    <label for="username" class="form-label required">用户名</label>
+                    <input type="text" class="form-control" id="username" th:field="*{username}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">
+                      请选择用户名
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="password" class="form-label required">密码</label>
+                    <input type="password" class="form-control" id="password" th:field="*{password}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">
+                      请输入密码
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="confirmPassword" class="form-label required">确认密码</label>
+                    <input type="password" class="form-control" id="confirmPassword" th:field="*{confirmPassword}"
+                      required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('confirmPassword')}"
+                      th:errors="*{confirmPassword}">
+                      请确认密码
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Verification Section -->
+                <h5 class="section-title mt-4">验证</h5>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="captcha" class="form-label required">验证码</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="captcha" th:field="*{captcha}" required
+                        placeholder="请输入验证码">
+                      <button class="btn btn-outline-secondary" type="button" onclick="refreshCaptcha()">
+                        <i class="bi bi-arrow-clockwise"></i>
+                      </button>
+                    </div>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('captcha')}" th:errors="*{captcha}">
+                      请输入验证码
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <img id="captchaImage" th:src="@{/auth/captcha}" alt="验证码" class="captcha-image img-fluid"
+                      onclick="refreshCaptcha()">
+                  </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                  <button class="btn btn-seller-primary" type="submit">
+                    <i class="bi bi-person-plus me-2"></i>注册
+                  </button>
+                  <a th:href="@{/login}" class="btn btn-link text-center">已有账号？点击登录</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 表单验证
+    (function () {
+      'use strict'
+      var forms = document.querySelectorAll('.needs-validation')
+      Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+          form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+
+            // 检查密码是否匹配
+            var password = document.getElementById('password')
+            var confirmPassword = document.getElementById('confirmPassword')
+            if (password.value !== confirmPassword.value) {
+              confirmPassword.setCustomValidity('密码不匹配')
+              event.preventDefault()
+              event.stopPropagation()
+            } else {
+              confirmPassword.setCustomValidity('')
+            }
+
+            form.classList.add('was-validated')
+          }, false)
+        })
+    })()
+
+    // 刷新验证码
+    function refreshCaptcha () {
+      var captchaImg = document.getElementById('captchaImage')
+      captchaImg.src = '[[@{/auth/captcha}]]?' + new Date().getTime()
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title>订单管理</title>
+  <style>
+    .admin-sidebar {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 5px;
+    }
+
+    .admin-sidebar .nav-link {
+      color: #333;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+
+    .admin-sidebar .nav-link:hover {
+      background-color: #e9ecef;
+    }
+
+    .admin-sidebar .nav-link.active {
+      background-color: #0d6efd;
+      color: white;
+    }
+
+    .admin-sidebar .nav-link i {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container-fluid py-4">
+      <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-2">
+          <div class="admin-sidebar">
+            <h5 class="mb-3">管理菜单</h5>
+            <div class="nav flex-column">
+              <a href="/admin/dashboard" class="nav-link">
+                <i class="bi bi-speedometer2"></i> 仪表盘
+              </a>
+              <a href="/admin/users" class="nav-link">
+                <i class="bi bi-people"></i> 用户管理
+              </a>
+              <a href="/admin/users/pending" class="nav-link">
+                <i class="bi bi-person-plus"></i> 待审核用户
+              </a>
+              <a href="/admin/sellers" class="nav-link">
+                <i class="bi bi-shop"></i> 商家管理
+              </a>
+              </a>
+              <a href="/admin/products" class="nav-link">
+                <i class="bi bi-box"></i> 商品管理
+              </a>
+              <a href="/admin/products/pending" class="nav-link">
+                <i class="bi bi-box-seam"></i> 待审核商品
+              </a>
+              <a href="/admin/orders" class="nav-link active">
+                <i class="bi bi-cart"></i> 订单管理
+              </a>
+              <a href="/admin/coupons" class="nav-link">
+                <i class="bi bi-ticket-perforated"></i> 优惠券管理
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-10">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>订单管理</h2>
+            <div class="d-flex gap-2">
+              <div class="input-group" style="width: 300px;">
+                <input type="text" class="form-control" placeholder="搜索订单...">
+                <button class="btn btn-outline-secondary" type="button">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary">
+                  <i class="bi bi-funnel"></i> 筛选
+                </button>
+                <button type="button" class="btn btn-outline-secondary">
+                  <i class="bi bi-download"></i> 导出
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Flash Messages -->
+          <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>订单ID</th>
+                      <th>客户</th>
+                      <th>总金额</th>
+                      <th>状态</th>
+                      <th>下单时间</th>
+                      <th>收货地址</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:if="${orders.isEmpty()}">
+                      <td colspan="7" class="text-center py-4">暂无订单数据</td>
+                    </tr>
+                    <tr th:each="order : ${orders}">
+                      <td th:text="${order.id}"></td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <img th:if="${order.user?.avatarUrl}" th:src="@{'/uploads/' + ${order.user.avatarUrl}}"
+                            class="rounded-circle me-2" width="32" height="32" alt="用户头像">
+                          <div class="d-flex flex-column">
+                            <span th:text="${order.user?.username ?: 'N/A'}" class="fw-medium"></span>
+                            <small class="text-muted" th:if="${order.user?.phone}"
+                              th:text="${order.user.phone}"></small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="d-flex flex-column">
+                          <div class="d-flex align-items-center mb-1">
+                            <span class="fw-bold text-danger me-2"
+                              th:text="${'¥' + #numbers.formatDecimal(order.totalAmount, 1, 2)}"></span>
+                            <small class="text-muted" th:if="${order.deductedAmount > 0}">
+                              (积分抵扣: ¥<span th:text="${#numbers.formatDecimal(order.deductedAmount, 1, 2)}"></span>)
+                            </small>
+                          </div>
+                          <small class="text-muted" th:if="${order.pointsDeducted > 0}">
+                            使用积分: <span th:text="${order.pointsDeducted}"></span>
+                          </small>
+                        </div>
+                      </td>
+                      <td>
+                        <span th:switch="${order.status}">
+                          <span th:case="${T(com.example.eshop.model.OrderStatus).PENDING_PAYMENT}"
+                            class="badge bg-warning text-dark">待付款</span>
+                          <span th:case="${T(com.example.eshop.model.OrderStatus).PENDING_DELIVERY}"
+                            class="badge bg-info">待发货</span>
+                          <span th:case="${T(com.example.eshop.model.OrderStatus).IN_TRANSIT}"
+                            class="badge bg-primary">运输中</span>
+                          <span th:case="${T(com.example.eshop.model.OrderStatus).DELIVERED}"
+                            class="badge bg-success">已送达</span>
+                          <span th:case="${T(com.example.eshop.model.OrderStatus).COMPLETED}"
+                            class="badge bg-success">已完成</span>
+                          <span th:case="${T(com.example.eshop.model.OrderStatus).CANCELED}"
+                            class="badge bg-danger">已取消</span>
+                          <span th:case="${T(com.example.eshop.model.OrderStatus).RETURN_REQUESTED}"
+                            class="badge bg-warning">申请退货</span>
+                          <span th:case="${T(com.example.eshop.model.OrderStatus).RETURN_APPROVED}"
+                            class="badge bg-info">退货通过</span>
+                          <span th:case="${T(com.example.eshop.model.OrderStatus).RETURN_REJECTED}"
+                            class="badge bg-danger">退货拒绝</span>
+                          <span th:case="${T(com.example.eshop.model.OrderStatus).RETURN_COMPLETED}"
+                            class="badge bg-secondary">退货完成</span>
+                          <span th:case="${T(com.example.eshop.model.OrderStatus).AUTO_COMPLETED}"
+                            class="badge bg-success">自动完成</span>
+                          <span th:case="*" class="badge bg-secondary" th:text="${order.status}">其他</span>
+                        </span>
+                      </td>
+                      <td>
+                        <div class="d-flex flex-column">
+                          <span th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd')}"></span>
+                          <small class="text-muted" th:text="${#temporals.format(order.createdAt, 'HH:mm')}"></small>
+                        </div>
+                      </td>
+                      <td>
+                        <span th:if="${order.address}"
+                          th:text="${order.address.shippingProvince + ' ' + order.address.shippingCity + ' ' + order.address.shippingDistrict + ' ' + order.address.detailedAddress}"
+                          th:title="${order.address.shippingProvince + ' ' + order.address.shippingCity + ' ' + order.address.shippingDistrict + ' ' + order.address.detailedAddress}"
+                          style="max-width: 200px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                        <span th:unless="${order.address}" class="text-muted">N/A</span>
+                      </td>
+                      <td>
+                        <div class="btn-group">
+                          <a th:href="@{/admin/orders/{id}(id=${order.id})}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> 查看
+                          </a>
+                          <button th:if="${order.status.name() == 'PENDING_DELIVERY'}" type="button"
+                            class="btn btn-sm btn-outline-success" data-bs-toggle="modal"
+                            th:data-bs-target="${'#shipModal-' + order.id}">
+                            <i class="bi bi-truck"></i> 发货
+                          </button>
+                          <button th:if="${order.status.name() == 'IN_TRANSIT'}" type="button"
+                            class="btn btn-sm btn-outline-info" data-bs-toggle="modal"
+                            th:data-bs-target="${'#deliverModal-' + order.id}">
+                            <i class="bi bi-check2-circle"></i> 确认送达
+                          </button>
+                          <button th:if="${order.status.name() == 'RETURN_REQUESTED'}" type="button"
+                            class="btn btn-sm btn-outline-warning" data-bs-toggle="modal"
+                            th:data-bs-target="${'#returnModal-' + order.id}">
+                            <i class="bi bi-arrow-return-left"></i> 处理退货
+                          </button>
+                        </div>
+
+                        <!-- 发货确认模态框 -->
+                        <div th:if="${order.status.name() == 'PAID'}" class="modal fade"
+                          th:id="${'shipModal-' + order.id}" tabindex="-1">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">确认发货</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                              </div>
+                              <div class="modal-body">
+                                <p>确认要为订单 #<span th:text="${order.id}"></span> 发货吗？</p>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <form th:action="@{/admin/orders/{id}/ship(id=${order.id})}" method="post"
+                                  class="d-inline">
+                                  <button type="submit" class="btn btn-success">确认发货</button>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- 确认送达模态框 -->
+                        <div th:if="${order.status.name() == 'SHIPPED'}" class="modal fade"
+                          th:id="${'deliverModal-' + order.id}" tabindex="-1">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">确认送达</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                              </div>
+                              <div class="modal-body">
+                                <p>确认订单 #<span th:text="${order.id}"></span> 已送达吗？</p>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <form th:action="@{/admin/orders/{id}/deliver(id=${order.id})}" method="post"
+                                  class="d-inline">
+                                  <button type="submit" class="btn btn-info">确认送达</button>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- 退货处理模态框 -->
+                        <div th:if="${order.status.name() == 'RETURN_REQUESTED'}" class="modal fade"
+                          th:id="${'returnModal-' + order.id}" tabindex="-1">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">处理退货申请</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                              </div>
+                              <div class="modal-body">
+                                <p>订单 #<span th:text="${order.id}"></span> 的退货申请</p>
+                                <div class="mb-3">
+                                  <label class="form-label">退货原因</label>
+                                  <p class="mb-0" th:text="${order.returnReason}"></p>
+                                </div>
+                                <div class="mb-3">
+                                  <label class="form-label">退货说明</label>
+                                  <p class="mb-0" th:text="${order.returnDescription}"></p>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <form th:action="@{/admin/orders/{id}/return/reject(id=${order.id})}" method="post"
+                                  class="d-inline">
+                                  <button type="submit" class="btn btn-danger">拒绝退货</button>
+                                </form>
+                                <form th:action="@{/admin/orders/{id}/return/approve(id=${order.id})}" method="post"
+                                  class="d-inline">
+                                  <button type="submit" class="btn btn-success">同意退货</button>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

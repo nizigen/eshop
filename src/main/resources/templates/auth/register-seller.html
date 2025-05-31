@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <meta charset="UTF-8">
+  <title>卖家注册</title>
+  <style>
+    .captcha-container {
+      margin-bottom: 20px;
+    }
+
+    .captcha-image {
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .required:after {
+      content: " *";
+      color: red;
+    }
+
+    .preview-image {
+      max-width: 200px;
+      max-height: 200px;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 5px;
+    }
+
+    .form-text {
+      font-size: 0.875em;
+      color: #6c757d;
+    }
+
+    .error-text {
+      color: #dc3545;
+      font-size: 0.875em;
+      margin-top: 0.25rem;
+    }
+
+    .section-title {
+      border-bottom: 2px solid #e9ecef;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.5rem;
+      color: #495057;
+    }
+
+    .file-upload-container {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+
+    .file-upload-info {
+      font-size: 0.875em;
+      color: #6c757d;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container">
+      <div class="row justify-content-center mt-5">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-body">
+              <h3 class="card-title text-center mb-4">卖家注册</h3>
+
+              <!-- Alert Messages -->
+              <div th:if="${errorMessage}" class="alert alert-danger mt-3" role="alert">
+                <span th:text="${errorMessage}">Error</span>
+              </div>
+              <div th:if="${successMessage}" class="alert alert-success" role="alert">
+                <span th:text="${successMessage}">Success</span>
+              </div>
+
+              <form th:action="@{/auth/register-seller}" th:object="${sellerDto}" method="post" class="needs-validation"
+                novalidate enctype="multipart/form-data">
+
+                <!-- Personal Information Section -->
+                <h5 class="section-title">个人信息</h5>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="name" class="form-label required">姓名</label>
+                    <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">
+                      请输入姓名
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="phone" class="form-label required">手机号</label>
+                    <input type="tel" class="form-control" id="phone" th:field="*{phone}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">
+                      请输入有效的手机号
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="email" class="form-label required">邮箱</label>
+                    <input type="email" class="form-control" id="email" th:field="*{email}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">
+                      请输入有效的邮箱地址
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="city" class="form-label">城市</label>
+                    <input type="text" class="form-control" id="city" th:field="*{city}">
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('city')}" th:errors="*{city}">
+                      请输入城市
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="gender" class="form-label">性别</label>
+                    <select class="form-select" id="gender" th:field="*{gender}">
+                      <option value="">请选择...</option>
+                      <option value="MALE">男</option>
+                      <option value="FEMALE">女</option>
+                      <option value="OTHER">其他</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="bankAccountNumber" class="form-label required">银行账号</label>
+                    <input type="text" class="form-control" id="bankAccountNumber" th:field="*{bankAccountNumber}"
+                      required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('bankAccountNumber')}"
+                      th:errors="*{bankAccountNumber}">
+                      请输入有效的银行账号
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Store Information Section -->
+                <h5 class="section-title mt-4">店铺信息</h5>
+                <div class="row">
+                  <div class="col-md-12 mb-3">
+                    <label for="storeName" class="form-label required">店铺名称</label>
+                    <input type="text" class="form-control" id="storeName" th:field="*{storeName}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('storeName')}" th:errors="*{storeName}">
+                      请输入店铺名称
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-12 mb-3">
+                    <label for="storeDescription" class="form-label">店铺描述</label>
+                    <textarea class="form-control" id="storeDescription" th:field="*{storeDescription}"
+                      rows="3"></textarea>
+                  </div>
+                </div>
+
+                <!-- Document Upload Section -->
+                <h5 class="section-title mt-4">证件上传</h5>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="businessLicenseFile" class="form-label required">营业执照</label>
+                    <input type="file" class="form-control" id="businessLicenseFile" name="businessLicenseFile" required
+                      accept="image/jpeg,image/png,application/pdf">
+                    <div class="form-text">支持 JPG、PNG、PDF 格式，大小不超过5MB</div>
+                    <div class="error-feedback" th:if="${#fields.hasErrors('global')}" th:errors="*{global}"></div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="idCardFile" class="form-label required">身份证</label>
+                    <input type="file" class="form-control" id="idCardFile" name="idCardFile" required
+                      accept="image/jpeg,image/png,application/pdf">
+                    <div class="form-text">支持 JPG、PNG、PDF 格式，大小不超过5MB</div>
+                  </div>
+                </div>
+
+                <!-- Account Information Section -->
+                <h5 class="section-title mt-4">账号信息</h5>
+                <div class="row">
+                  <div class="col-md-12 mb-3">
+                    <label for="username" class="form-label required">用户名</label>
+                    <input type="text" class="form-control" id="username" th:field="*{username}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">
+                      请选择用户名
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="password" class="form-label required">密码</label>
+                    <input type="password" class="form-control" id="password" th:field="*{password}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">
+                      请输入密码
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="confirmPassword" class="form-label required">确认密码</label>
+                    <input type="password" class="form-control" id="confirmPassword" th:field="*{confirmPassword}"
+                      required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('confirmPassword')}"
+                      th:errors="*{confirmPassword}">
+                      请确认密码
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Verification Section -->
+                <h5 class="section-title mt-4">验证</h5>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="captcha" class="form-label required">验证码</label>
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="captcha" name="captcha" required>
+                      <button class="btn btn-outline-secondary" type="button" onclick="refreshCaptcha()">
+                        <i class="fas fa-sync-alt"></i>
+                      </button>
+                    </div>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('captcha')}" th:errors="*{captcha}">
+                      请输入验证码
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <img id="captchaImage" th:src="@{/auth/captcha}" alt="验证码" class="captcha-image img-fluid"
+                      onclick="refreshCaptcha()">
+                  </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-grid gap-2">
+                  <button class="btn btn-primary" type="submit">注册</button>
+                  <a th:href="@{/login}" class="btn btn-link text-center">已有账号？点击登录</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <th:block layout:fragment="scripts">
+    <script>
+      // 刷新验证码
+      function refreshCaptcha () {
+        var captchaImg = document.getElementById('captchaImage')
+        captchaImg.src = '/auth/captcha?' + new Date().getTime()
+      }
+
+      // 表单验证
+      (function () {
+        'use strict'
+        const forms = document.querySelectorAll('.needs-validation')
+        Array.from(forms).forEach(form => {
+          form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+          }, false)
+        })
+      })()
+
+      // 文件上传预览
+      document.getElementById('businessLicenseFile').addEventListener('change', function (e) {
+        validateFileUpload(this, 5);
+      });
+
+      document.getElementById('idCardFile').addEventListener('change', function (e) {
+        validateFileUpload(this, 5);
+      });
+
+      function validateFileUpload (input, maxSizeMB) {
+        if (input.files && input.files[0]) {
+          const file = input.files[0];
+          const fileSize = file.size / (1024 * 1024); // Convert to MB
+
+          if (fileSize > maxSizeMB) {
+            alert(`文件大小不能超过 ${maxSizeMB}MB`);
+            input.value = '';
+            return false;
+          }
+
+          const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+          if (!allowedTypes.includes(file.type)) {
+            alert('只支持 JPG、PNG、PDF 格式的文件');
+            input.value = '';
+            return false;
+          }
+        }
+        return true;
+      }
+    </script>
+  </th:block>
+</body>
+
+</html>

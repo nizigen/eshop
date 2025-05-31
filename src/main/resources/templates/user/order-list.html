@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <meta charset="UTF-8">
+  <title>我的订单</title>
+  <style>
+    .order-card {
+      margin-bottom: 1rem;
+      border: 1px solid #dee2e6;
+      border-radius: 0.5rem;
+    }
+
+    .order-header {
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
+      border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .order-body {
+      padding: 1rem;
+    }
+
+    .order-footer {
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border-top: 1px solid #dee2e6;
+      border-radius: 0 0 0.5rem 0.5rem;
+    }
+
+    .product-item {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .product-item:last-child {
+      border-bottom: none;
+    }
+
+    .product-image {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+    }
+
+    .status-badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+    }
+
+    .pagination {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div layout:fragment="content" class="container py-4">
+    <h2 class="mb-4">我的订单</h2>
+
+    <div th:if="${orders.empty}" class="alert alert-info">
+      暂无订单记录
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>订单编号</th>
+            <th>下单时间</th>
+            <th>订单金额</th>
+            <th>订单状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="order : ${orders}">
+            <td th:text="${order.orderNumber}">202403150001</td>
+            <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm:ss')}">2024-03-15 10:00:00</td>
+            <td th:text="${#numbers.formatDecimal(order.totalAmount, 1, 2)}">99.00</td>
+            <td>
+              <span class="badge" th:classappend="${order.status == T(com.example.eshop.model.OrderStatus).PENDING_PAYMENT ? 'bg-warning text-dark' : 
+                                                  order.status == T(com.example.eshop.model.OrderStatus).PENDING_DELIVERY ? 'bg-info' : 
+                                                  order.status == T(com.example.eshop.model.OrderStatus).IN_TRANSIT ? 'bg-primary' : 
+                                                  order.status == T(com.example.eshop.model.OrderStatus).DELIVERED ? 'bg-success' : 
+                                                  order.status == T(com.example.eshop.model.OrderStatus).COMPLETED ? 'bg-success' : 
+                                                  order.status == T(com.example.eshop.model.OrderStatus).CANCELED ? 'bg-danger' : 
+                                                  order.status == T(com.example.eshop.model.OrderStatus).RETURN_REQUESTED ? 'bg-warning' : 
+                                                  order.status == T(com.example.eshop.model.OrderStatus).RETURN_APPROVED ? 'bg-info' : 
+                                                  order.status == T(com.example.eshop.model.OrderStatus).RETURN_REJECTED ? 'bg-danger' : 
+                                                  order.status == T(com.example.eshop.model.OrderStatus).RETURN_COMPLETED ? 'bg-secondary' : 
+                                                  'bg-secondary'}" th:text="${order.status == T(com.example.eshop.model.OrderStatus).PENDING_PAYMENT ? '待付款' : 
+                          order.status == T(com.example.eshop.model.OrderStatus).PENDING_DELIVERY ? '待发货' : 
+                          order.status == T(com.example.eshop.model.OrderStatus).IN_TRANSIT ? '运输中' : 
+                          order.status == T(com.example.eshop.model.OrderStatus).DELIVERED ? '已送达' : 
+                          order.status == T(com.example.eshop.model.OrderStatus).COMPLETED ? '已完成' : 
+                          order.status == T(com.example.eshop.model.OrderStatus).CANCELED ? '已取消' : 
+                          order.status == T(com.example.eshop.model.OrderStatus).RETURN_REQUESTED ? '申请退货' : 
+                          order.status == T(com.example.eshop.model.OrderStatus).RETURN_APPROVED ? '退货通过' : 
+                          order.status == T(com.example.eshop.model.OrderStatus).RETURN_REJECTED ? '退货拒绝' : 
+                          order.status == T(com.example.eshop.model.OrderStatus).RETURN_COMPLETED ? '退货完成' : 
+                          order.status}">
+                状态
+              </span>
+            </td>
+            <td>
+              <div class="btn-group">
+                <a th:href="@{/user/orders/{id}(id=${order.id})}" class="btn btn-sm btn-primary">
+                  <i class="bi bi-eye"></i> 查看详情
+                </a>
+                <!-- 待付款状态显示付款按钮 -->
+                <a th:if="${order.status == T(com.example.eshop.model.OrderStatus).PENDING_PAYMENT}"
+                  th:href="@{/orders/create}" class="btn btn-sm btn-success">
+                  <i class="bi bi-credit-card"></i> 立即付款
+                </a>
+                <!-- 已送达状态显示确认收货按钮 -->
+                <button th:if="${order.status == T(com.example.eshop.model.OrderStatus).DELIVERED}"
+                  class="btn btn-sm btn-info" data-bs-toggle="modal"
+                  th:data-bs-target="'#confirmReceiptModal-' + ${order.id}">
+                  <i class="bi bi-check-circle"></i> 确认收货
+                </button>
+                <!-- 已完成状态显示申请退货按钮 -->
+                <button th:if="${order.status == T(com.example.eshop.model.OrderStatus).COMPLETED}"
+                  class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                  th:data-bs-target="'#returnRequestModal-' + ${order.id}">
+                  <i class="bi bi-arrow-return-left"></i> 申请退货
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 分页 -->
+    <nav th:if="${orders.totalPages > 1}" aria-label="订单列表分页">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" th:classappend="${orders.first ? 'disabled' : ''}">
+          <a class="page-link" th:href="@{/user/orders(page=${orders.number - 1})}" tabindex="-1">上一页</a>
+        </li>
+        <li class="page-item" th:each="i : ${#numbers.sequence(0, orders.totalPages - 1)}"
+          th:classappend="${i == orders.number ? 'active' : ''}">
+          <a class="page-link" th:href="@{/user/orders(page=${i})}" th:text="${i + 1}"></a>
+        </li>
+        <li class="page-item" th:classappend="${orders.last ? 'disabled' : ''}">
+          <a class="page-link" th:href="@{/user/orders(page=${orders.number + 1})}">下一页</a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- 确认收货模态框 -->
+    <div th:each="order : ${orders}" th:if="${order.status == T(com.example.eshop.model.OrderStatus).DELIVERED}"
+      th:id="'confirmReceiptModal-' + ${order.id}" class="modal fade" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">确认收货</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p>确认已收到商品吗？</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-success"
+              th:onclick="'confirmReceipt(' + ${order.id} + ')'">确认收货</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 申请退货模态框 -->
+    <div th:each="order : ${orders}" th:if="${order.status == T(com.example.eshop.model.OrderStatus).COMPLETED}"
+      th:id="'returnRequestModal-' + ${order.id}" class="modal fade" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">申请退货</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form th:id="'returnRequestForm-' + ${order.id}">
+              <div class="mb-3">
+                <label for="returnReason" class="form-label">退货原因</label>
+                <select class="form-select" th:id="'returnReason-' + ${order.id}" required>
+                  <option value="">请选择退货原因</option>
+                  <option value="QUALITY_ISSUE">商品质量问题</option>
+                  <option value="WRONG_ITEM">商品与描述不符</option>
+                  <option value="DAMAGED">商品损坏</option>
+                  <option value="OTHER">其他原因</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="returnDescription" class="form-label">详细说明</label>
+                <textarea class="form-control" th:id="'returnDescription-' + ${order.id}" rows="3" required></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-warning"
+              th:onclick="'submitReturnRequest(' + ${order.id} + ')'">提交申请</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script th:inline="javascript">
+      function confirmReceipt (orderId) {
+        fetch(`/api/orders/${orderId}/confirm-receipt`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              location.reload();
+            } else {
+              alert(data.message || '确认收货失败');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('确认收货失败，请稍后重试');
+          });
+      }
+
+      function submitReturnRequest (orderId) {
+        const reason = document.getElementById(`returnReason-${orderId}`).value;
+        const description = document.getElementById(`returnDescription-${orderId}`).value;
+
+        if (!reason || !description) {
+          alert('请填写完整的退货信息');
+          return;
+        }
+
+        fetch(`/api/orders/${orderId}/return-request`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            reason: reason,
+            description: description
+          })
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              location.reload();
+            } else {
+              alert(data.message || '提交退货申请失败');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('提交退货申请失败，请稍后重试');
+          });
+      }
+    </script>
+  </div>
+
+</body>
+
+</html>

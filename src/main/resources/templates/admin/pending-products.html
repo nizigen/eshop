@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title>待审核商品</title>
+  <style>
+    .admin-sidebar {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 5px;
+    }
+
+    .admin-sidebar .nav-link {
+      color: #333;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+
+    .admin-sidebar .nav-link:hover {
+      background-color: #e9ecef;
+    }
+
+    .admin-sidebar .nav-link.active {
+      background-color: #0d6efd;
+      color: white;
+    }
+
+    .admin-sidebar .nav-link i {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container-fluid py-4">
+      <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-2">
+          <div class="admin-sidebar">
+            <h5 class="mb-3">管理菜单</h5>
+            <div class="nav flex-column">
+              <a href="/admin/dashboard" class="nav-link">
+                <i class="bi bi-speedometer2"></i> 仪表盘
+              </a>
+              <a href="/admin/users" class="nav-link">
+                <i class="bi bi-people"></i> 用户管理
+              </a>
+              <a href="/admin/users/pending" class="nav-link">
+                <i class="bi bi-person-plus"></i> 待审核用户
+              </a>
+              <a href="/admin/sellers" class="nav-link">
+                <i class="bi bi-shop"></i> 商家管理
+              </a>
+              <a href="/admin/products" class="nav-link">
+                <i class="bi bi-box"></i> 商品管理
+              </a>
+              <a href="/admin/products/pending" class="nav-link active">
+                <i class="bi bi-box-seam"></i> 待审核商品
+              </a>
+              <a href="/admin/orders" class="nav-link">
+                <i class="bi bi-cart"></i> 订单管理
+              </a>
+              <a href="/admin/coupons" class="nav-link">
+                <i class="bi bi-ticket-perforated"></i> 优惠券管理
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-10">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>待审核商品</h2>
+            <div class="d-flex gap-2">
+              <div class="input-group" style="width: 300px;">
+                <input type="text" class="form-control" placeholder="搜索商品...">
+                <button class="btn btn-outline-secondary" type="button">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Flash Messages -->
+          <div id="alertContainer">
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+              <span th:text="${successMessage}"></span>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+              <span th:text="${errorMessage}"></span>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>商品ID</th>
+                      <th>商品图片</th>
+                      <th>商品名称</th>
+                      <th>卖家</th>
+                      <th>价格</th>
+                      <th>提交时间</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:if="${products.isEmpty()}">
+                      <td colspan="7" class="text-center py-4">暂无待审核商品</td>
+                    </tr>
+                    <tr th:each="product : ${products}" th:id="${'product-row-' + product.id}">
+                      <td th:text="${product.id}"></td>
+                      <td>
+                        <img th:if="${product.primaryImage}" th:src="${product.primaryImage.getDisplayUrl()}"
+                          class="img-thumbnail" width="50" height="50" alt="商品图片">
+                        <span th:unless="${product.primaryImage}" class="badge bg-secondary">无图片</span>
+                      </td>
+                      <td>
+                        <a th:href="@{/admin/products/{id}(id=${product.id})}" th:text="${product.name}"
+                          class="text-decoration-none"></a>
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <img th:if="${product.seller?.avatarUrl}" th:src="@{${product.seller.avatarUrl}}"
+                            class="rounded-circle me-2" width="32" height="32" alt="卖家头像">
+                          <span th:text="${product.seller?.username ?: 'N/A'}"></span>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="fw-bold"
+                          th:text="${'¥' + #numbers.formatDecimal(product.discountPrice, 1, 2)}"></span>
+                        <span class="text-decoration-line-through text-muted ms-2"
+                          th:if="${product.originalPrice > product.discountPrice}"
+                          th:text="${'¥' + #numbers.formatDecimal(product.originalPrice, 1, 2)}"></span>
+                      </td>
+                      <td th:text="${#temporals.format(product.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                      <td>
+                        <div class="btn-group">
+                          <button type="button" class="btn btn-sm btn-outline-success approve-product"
+                            th:data-product-id="${product.id}">
+                            <i class="bi bi-check-lg"></i> 通过
+                          </button>
+                          <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                            th:data-bs-target="${'#rejectModal-' + product.id}">
+                            <i class="bi bi-x-lg"></i> 拒绝
+                          </button>
+                        </div>
+
+                        <!-- 拒绝确认模态框 -->
+                        <div class="modal fade" th:id="${'rejectModal-' + product.id}" tabindex="-1">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">确认拒绝</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="mb-3">
+                                  <label for="rejectReason" class="form-label">拒绝原因</label>
+                                  <textarea class="form-control reject-reason" rows="3" required></textarea>
+                                </div>
+                                <div class="text-end">
+                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                  <button type="button" class="btn btn-danger reject-product"
+                                    th:data-product-id="${product.id}">确认拒绝</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加 JavaScript -->
+  <th:block layout:fragment="scripts">
+    <script th:inline="javascript">
+      document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.approve-product').forEach(btn => {
+          btn.addEventListener('click', function () {
+            const productId = this.getAttribute('data-product-id');
+            fetch(`/admin/products/${productId}/approve`, { method: 'POST' })
+              .then(res => {
+                if (res.ok) {
+                  document.getElementById('product-row-' + productId).remove();
+                  showToast('success', '审核通过');
+                } else {
+                  showToast('error', '操作失败');
+                }
+              });
+          });
+        });
+      });
+    </script>
+  </th:block>
+</body>
+
+</html>

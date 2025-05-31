@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title>个人中心</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- 添加 Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <style>
+    .profile-section {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .avatar-container {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 1rem;
+    }
+
+    .avatar-container img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .avatar-upload {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 0.5rem;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .form-label.required:after {
+      content: " *";
+      color: red;
+    }
+
+    .error-feedback {
+      color: #dc3545;
+      font-size: 0.875em;
+      margin-top: 0.25rem;
+    }
+
+    .address-card {
+      position: relative;
+      padding: 1rem;
+      border: 1px solid #dee2e6;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .address-card.default {
+      border-color: #0d6efd;
+    }
+
+    .address-actions {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+    }
+
+    .address-badge {
+      position: absolute;
+      top: -0.5rem;
+      left: 1rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      border-radius: 0.25rem;
+    }
+  </style>
+
+  <!-- 只保留Bootstrap 5 bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+  <div layout:fragment="content" class="container py-4">
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
+
+    <div class="row">
+      <!-- 左侧导航 -->
+      <div class="col-md-3">
+        <div class="list-group">
+          <a href="#profile" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+            基本信息
+          </a>
+          <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="list">
+            安全设置
+          </a>
+          <a href="#address" class="list-group-item list-group-item-action" data-bs-toggle="list">
+            收货地址
+          </a>
+          <a href="#points" class="list-group-item list-group-item-action" data-bs-toggle="list">
+            我的积分
+          </a>
+          <a href="#orders" class="list-group-item list-group-item-action" data-bs-toggle="list">
+            我的订单
+          </a>
+          <a href="#wallet" class="list-group-item list-group-item-action" data-bs-toggle="list">
+            我的钱包
+          </a>
+          <a href="#coupons" class="list-group-item list-group-item-action" data-bs-toggle="list">
+            我的优惠券
+          </a>
+          <a href="#reviews" class="list-group-item list-group-item-action" data-bs-toggle="list">
+            我的评价
+          </a>
+        </div>
+      </div>
+
+      <!-- 右侧内容 -->
+      <div class="col-md-9">
+        <div class="tab-content">
+          <!-- 基本信息 -->
+          <div class="tab-pane fade show active" id="profile">
+            <div class="profile-section">
+              <h4 class="mb-4">基本信息</h4>
+              <div class="avatar-container mb-4">
+                <img th:if="${user.avatarUrl != null}" th:src="@{'/uploads/' + ${user.avatarUrl}}" alt="用户头像"
+                  id="avatarPreview">
+                <img th:unless="${user.avatarUrl != null}" th:src="@{/static/images/default-avatar.png}" alt="默认头像"
+                  id="avatarPreview">
+                <label for="avatarUpload" class="avatar-upload">
+                  <i class="fas fa-camera"></i>
+                </label>
+                <input type="file" id="avatarUpload" class="d-none" accept="image/*"
+                  onchange="handleAvatarUpload(this)">
+              </div>
+              <form id="profileForm" method="post" action="/profile/update" class="needs-validation" novalidate>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="username" class="form-label required">用户名</label>
+                    <input type="text" class="form-control" id="username" name="username" th:value="${user.username}"
+                      readonly>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="phone" class="form-label required">手机号</label>
+                    <input type="tel" class="form-control" id="phone" name="phone" th:value="${user.phone}" required>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="email" class="form-label">邮箱</label>
+                    <input type="email" class="form-control" id="email" name="email" th:value="${user.email}" readonly>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="wechat" class="form-label">微信号</label>
+                    <input type="text" class="form-control" id="wechat" name="wechat" th:value="${user.wechat}">
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="userCity" class="form-label">城市</label>
+                    <input type="text" class="form-control" id="userCity" name="city" th:value="${user.city}">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="gender" class="form-label">性别</label>
+                    <select class="form-select" id="gender" name="gender">
+                      <option value="">请选择</option>
+                      <option value="MALE" th:selected="${user.gender != null and user.gender.name() == 'MALE'}">男
+                      </option>
+                      <option value="FEMALE" th:selected="${user.gender != null and user.gender.name() == 'FEMALE'}">女
+                      </option>
+                      <option value="UNKNOWN" th:selected="${user.gender == null or user.gender.name() == 'UNKNOWN'}">其他
+                      </option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="bio" class="form-label">个人简介</label>
+                  <textarea class="form-control" id="bio" name="bio" rows="3" th:text="${user.bio}"></textarea>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <button type="submit" class="btn btn-primary">保存修改</button>
+                  <a href="/profile/additional" class="btn btn-outline-primary">
+                    <i class="fas fa-id-card me-1"></i>管理附加信息
+                  </a>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- 安全设置 -->
+          <div class="tab-pane fade" id="security">
+            <div class="profile-section">
+              <h4 class="mb-4">修改密码</h4>
+              <form id="passwordForm" class="needs-validation" novalidate>
+                <div class="mb-3">
+                  <label for="currentPassword" class="form-label required">当前密码</label>
+                  <input type="password" class="form-control" id="currentPassword" required>
+                </div>
+                <div class="mb-3">
+                  <label for="newPassword" class="form-label required">新密码</label>
+                  <input type="password" class="form-control" id="newPassword" required>
+                </div>
+                <div class="mb-3">
+                  <label for="confirmPassword" class="form-label required">确认新密码</label>
+                  <input type="password" class="form-control" id="confirmPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">修改密码</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- 收货地址 -->
+          <div class="tab-pane fade" id="address">
+            <div class="profile-section">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="m-0">收货地址</h4>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addressModal">
+                  <i class="fas fa-plus me-1"></i>添加新地址
+                </button>
+              </div>
+
+              <div th:if="${#lists.isEmpty(addresses)}" class="text-center py-4">
+                <p class="text-muted">暂无收货地址</p>
+              </div>
+
+              <div th:each="address : ${addresses}" class="address-card mb-3">
+                <div th:if="${address.default}" class="address-badge bg-primary text-white">默认地址</div>
+                <div class="address-actions">
+                  <button class="btn btn-sm btn-outline-primary me-1" th:onclick="'editAddress(' + ${address.id} + ')'">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" th:onclick="'deleteAddress(' + ${address.id} + ')'">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+                <div class="mb-2">
+                  <strong th:text="${address.receiverName}">收货人</strong>
+                  <span class="ms-3" th:text="${address.receiverPhone}">电话</span>
+                </div>
+                <div
+                  th:text="${address.shippingProvince + ' ' + address.shippingCity + ' ' + address.shippingDistrict + ' ' + address.detailedAddress}">
+                  详细地址
+                </div>
+                <div class="mt-2" th:unless="${address.default}">
+                  <button class="btn btn-sm btn-link" th:onclick="'setDefaultAddress(' + ${address.id} + ')'">
+                    设为默认地址
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 我的积分 -->
+          <div class="tab-pane fade" id="points">
+            <div class="profile-section">
+              <h4 class="mb-4">我的积分</h4>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="card text-center">
+                    <div class="card-body">
+                      <h3 class="card-title text-primary" th:text="${points != null ? points.balance : 0}">0</h3>
+                      <p class="card-text">可用积分</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card text-center">
+                    <div class="card-body">
+                      <h3 class="card-title text-success" th:text="${deductibleAmount}">0.00</h3>
+                      <p class="card-text">可抵扣金额（元）</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <h5>积分明细</h5>
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>时间</th>
+                        <th>类型</th>
+                        <th>积分变动</th>
+                        <th>说明</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr th:if="${#lists.isEmpty(pointsHistory)}">
+                        <td colspan="4" class="text-center">暂无积分记录</td>
+                      </tr>
+                      <tr th:each="record : ${pointsHistory}">
+                        <td th:text="${#temporals.format(record.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                        <td th:text="${record.type}"></td>
+                        <td th:text="${record.points > 0 ? '+' + record.points : record.points}"></td>
+                        <td th:text="${record.description}"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 我的订单 -->
+          <div class="tab-pane fade" id="orders">
+            <div class="profile-section">
+              <h4 class="mb-4">我的订单</h4>
+              <div th:if="${orders == null or #lists.isEmpty(orders)}" class="text-center py-5">
+                <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+                <p class="text-muted mb-3">您还没有任何订单</p>
+                <a href="/products" class="btn btn-primary">去购物</a>
+              </div>
+              <div th:if="${orders != null and not #lists.isEmpty(orders)}" th:each="order : ${orders}"
+                class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <span>订单号：<span th:text="${order.orderNumber}"></span></span>
+                  <span th:text="${order.status}"></span>
+                </div>
+                <div class="card-body">
+                  <div th:each="item : ${order.items}" class="d-flex mb-2">
+                    <img th:if="${!#lists.isEmpty(item.product.images)}" th:src="${item.product.images[0].imageUrl}"
+                      class="me-3" style="width: 80px; height: 80px; object-fit: cover;">
+                    <img th:unless="${!#lists.isEmpty(item.product.images)}" src="/images/placeholder.jpg" class="me-3"
+                      style="width: 80px; height: 80px; object-fit: cover;">
+                    <div>
+                      <h6 th:text="${item.product.name}"></h6>
+                      <p class="text-muted mb-0" th:text="${item.product.description}"></p>
+                      <div class="mt-1">
+                        <span class="text-danger">¥<span th:text="${item.price}"></span></span>
+                        <span class="ms-2">x<span th:text="${item.quantity}"></span></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                  <div>
+                    总计：<span class="text-danger">¥<span th:text="${order.totalAmount}"></span></span>
+                  </div>
+                  <div>
+                    <a th:href="@{'/orders/' + ${order.id}}" class="btn btn-outline-primary btn-sm">查看详情</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 我的钱包 -->
+          <div class="tab-pane fade" id="wallet">
+            <div class="profile-section">
+              <h4 class="mb-4">我的钱包</h4>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="card text-center">
+                    <div class="card-body">
+                      <h3 class="card-title text-primary"
+                        th:text="${wallet != null ? #numbers.formatDecimal(wallet.balance, 1, 2) : '0.00'}">0.00</h3>
+                      <p class="card-text">账户余额（元）</p>
+                      <div class="mt-3">
+                        <button class="btn btn-primary me-2" onclick="showRechargeDialog()">充值</button>
+                        <button class="btn btn-outline-primary" onclick="showWithdrawDialog()">提现</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card">
+                    <div class="card-body">
+                      <h5 class="card-title">本月收支</h5>
+                      <div class="row mt-3">
+                        <div class="col-6 text-center">
+                          <p class="mb-1">收入</p>
+                          <h4 class="text-success"
+                            th:text="${monthlyIncome != null ? #numbers.formatDecimal(monthlyIncome, 1, 2) : '0.00'}">
+                            0.00</h4>
+                        </div>
+                        <div class="col-6 text-center">
+                          <p class="mb-1">支出</p>
+                          <h4 class="text-danger"
+                            th:text="${monthlyExpense != null ? #numbers.formatDecimal(monthlyExpense, 1, 2) : '0.00'}">
+                            0.00</h4>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <h5>交易记录</h5>
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>时间</th>
+                        <th>类型</th>
+                        <th>金额</th>
+                        <th>说明</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr th:if="${#lists.isEmpty(transactions)}">
+                        <td colspan="4" class="text-center">暂无交易记录</td>
+                      </tr>
+                      <tr th:each="transaction : ${transactions}">
+                        <td th:text="${#temporals.format(transaction.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                        <td th:text="${transaction.type}"></td>
+                        <td th:text="${transaction.amount > 0 ? '+' + transaction.amount : transaction.amount}"></td>
+                        <td th:text="${transaction.description}"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 我的优惠券 -->
+          <div class="tab-pane fade" id="coupons">
+            <div class="profile-section">
+              <h4 class="mb-4">我的优惠券</h4>
+              <div class="row">
+                <div class="col-md-12 mb-4">
+                  <div class="card">
+                    <div class="card-body">
+                      <h5 class="card-title">可领取的优惠券</h5>
+                      <div class="table-responsive">
+                        <table class="table" id="availableCouponsTable">
+                          <thead>
+                            <tr>
+                              <th>优惠券名称</th>
+                              <th>优惠类型</th>
+                              <th>优惠金额/折扣</th>
+                              <th>使用条件</th>
+                              <th>有效期</th>
+                              <th>操作</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr th:if="${#lists.isEmpty(availableCoupons)}">
+                              <td colspan="6" class="text-center">暂无可领取的优惠券</td>
+                            </tr>
+                            <tr th:each="coupon : ${availableCoupons}">
+                              <td th:text="${coupon.name}"></td>
+                              <td th:text="${coupon.type == 'DISCOUNT' ? '折扣券' : '满减券'}"></td>
+                              <td th:text="${coupon.type == 'DISCOUNT' ? coupon.value + '折' : '¥' + coupon.value}"></td>
+                              <td th:text="'满¥' + ${coupon.minPurchase}"></td>
+                              <td
+                                th:text="${#temporals.format(coupon.startTime, 'yyyy-MM-dd') + ' 至 ' + #temporals.format(coupon.endTime, 'yyyy-MM-dd')}">
+                              </td>
+                              <td>
+                                <button class="btn btn-primary btn-sm" onclick="claimCoupon(${coupon.id})">领取</button>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="card">
+                    <div class="card-body">
+                      <h5 class="card-title">我的优惠券</h5>
+                      <div class="table-responsive">
+                        <table class="table" id="userCouponsTable">
+                          <thead>
+                            <tr>
+                              <th>优惠券名称</th>
+                              <th>优惠类型</th>
+                              <th>优惠金额/折扣</th>
+                              <th>使用条件</th>
+                              <th>有效期</th>
+                              <th>状态</th>
+                              <th>操作</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr th:if="${#lists.isEmpty(userCoupons)}">
+                              <td colspan="7" class="text-center">暂无优惠券</td>
+                            </tr>
+                            <tr th:each="coupon : ${userCoupons}">
+                              <td th:text="${coupon.name}"></td>
+                              <td th:text="${coupon.type == 'PERCENTAGE' ? '折扣券' : '满减券'}"></td>
+                              <td th:text="${coupon.type == 'PERCENTAGE' ? coupon.value + '折' : '¥' + coupon.value}">
+                              </td>
+                              <td th:text="'满¥' + ${coupon.minPurchase}"></td>
+                              <td
+                                th:text="${#temporals.format(coupon.startTime, 'yyyy-MM-dd') + ' 至 ' + #temporals.format(coupon.endTime, 'yyyy-MM-dd')}">
+                              </td>
+                              <td th:text="${coupon.used ? '已使用' : '未使用'}"></td>
+                              <td>
+                                <a th:if="${!coupon.used}" href="/" class="btn btn-success btn-sm">去使用</a>
+                                <span th:if="${coupon.used}" class="text-muted">已使用</span>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 我的评价 -->
+          <div class="tab-pane fade" id="reviews">
+            <div class="profile-section">
+              <h4 class="mb-4">我的评价</h4>
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>商品</th>
+                      <th>评分</th>
+                      <th>评价内容</th>
+                      <th>服务评分</th>
+                      <th>服务评价</th>
+                      <th>时间</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:if="${#lists.isEmpty(userReviews)}">
+                      <td colspan="6" class="text-center">暂无评价记录</td>
+                    </tr>
+                    <tr th:each="review : ${userReviews}">
+                      <td th:text="${review.product != null ? review.product.name : ''}"></td>
+                      <td th:text="${review.productRating}"></td>
+                      <td th:text="${review.productComment}"></td>
+                      <td th:text="${review.sellerServiceRating}"></td>
+                      <td th:text="${review.sellerServiceComment}"></td>
+                      <td th:text="${#temporals.format(review.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 必需的 JavaScript 依赖 -->
+  <th:block layout:fragment="scripts">
+
+    <script th:inline="javascript">
+      let addressModal;
+
+      // 页面加载完成后初始化
+      document.addEventListener('DOMContentLoaded', function () {
+        // 初始化地址列表
+        loadAddressList();
+
+        // 初始化模态框
+        const modalElement = document.getElementById('addressModal');
+        if (modalElement) {
+          addressModal = new bootstrap.Modal(modalElement, {
+            keyboard: true,
+            backdrop: true
+          });
+        }
+
+        // 监听优惠券标签页的点击事件
+        const couponsTab = document.querySelector('a[href="#coupons"]');
+        if (couponsTab) {
+          couponsTab.addEventListener('click', function () {
+            console.log('Loading coupons...');
+            loadAvailableCoupons();
+            loadUserCoupons();
+          });
+        }
+
+        // 基本信息表单AJAX保存
+        const profileForm = document.getElementById('profileForm');
+        if (profileForm) {
+          profileForm.addEventListener('submit', function (e) {
+            e.preventDefault(); // 阻止默认提交行为
+
+            const formData = {
+              name: document.getElementById('username').value,
+              email: document.getElementById('email').value,
+              phone: document.getElementById('phone').value,
+              wechat: document.getElementById('wechat').value,
+              city: document.getElementById('userCity').value,
+              gender: document.getElementById('gender').value,
+              bio: document.getElementById('bio').value
+            };
+
+            // 发送请求
+            fetch('/profile/update', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+              },
+              body: JSON.stringify(formData)
+            })
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('Network response was not ok');
+                }
+                return response.json();
+              })
+              .then(data => {
+                if (data.success) {
+                  showToast('success', data.message || '更新成功');
+                  // 可选：刷新页面或更新UI
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 1500);
+                } else {
+                  showToast('error', data.message || '更新失败');
+                }
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                showToast('error', '更新失败，请稍后重试');
+              });
+          });
+        }
+      });
+
+      // 重置地址表单
+      function resetAddressForm () {
+        const form = document.getElementById('addressForm');
+        if (form) {
+          form.reset();
+          document.getElementById('addressModalLabel').textContent = '添加新地址';
+          document.getElementById('addressId').value = '';
+          addressModal.show(); // 使用已初始化的modal实例
+        }
+      }
+
+      // 处理编辑地址
+      function handleEditAddress (addressData) {
+        const form = document.getElementById('addressForm');
+        if (form) {
+          form.querySelector('#addressId').value = addressData.id;
+          form.querySelector('#receiverName').value = addressData.receiverName;
+          form.querySelector('#receiverPhone').value = addressData.receiverPhone;
+          form.querySelector('#shippingProvince').value = addressData.shippingProvince;
+          form.querySelector('#shippingCity').value = addressData.shippingCity;
+          form.querySelector('#shippingDistrict').value = addressData.shippingDistrict;
+          form.querySelector('#detailedAddress').value = addressData.detailedAddress;
+          form.querySelector('#isDefault').checked = addressData.isDefault;
+          document.querySelector('#addressModalLabel').textContent = '编辑地址';
+          addressModal.show(); // 使用已初始化的modal实例
+        }
+      }
+
+      // 处理保存地址
+      function handleSaveAddress () {
+        const form = document.getElementById('addressForm');
+        if (form) {
+          saveAddress(form);
+        }
+      }
+
+      // 加载地址列表
+      function loadAddressList () {
+        const addressListContainer = document.querySelector('#addressList');
+        if (!addressListContainer) return;
+
+        fetch('/profile/addresses/list')
+          .then(response => response.json())
+          .then(data => {
+            if (!data.success) {
+              throw new Error('Failed to load addresses');
+            }
+
+            const addresses = data.addresses;
+            if (!addresses || addresses.length === 0) {
+              addressListContainer.innerHTML = `
+                <div class="alert alert-info">
+                  您还没有添加任何收货地址
+                </div>
+              `;
+              return;
+            }
+
+            addressListContainer.innerHTML = addresses.map(address => `
+              <div class="card mb-3 ${address.isDefault ? 'border-primary' : ''}">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h5 class="card-title">${address.receiverName} ${address.receiverPhone}</h5>
+                      <p class="card-text">
+                        ${address.shippingProvince} ${address.shippingCity} ${address.shippingDistrict}<br>
+                        ${address.detailedAddress}
+                        ${address.isDefault ? '<span class="badge bg-primary ms-2">默认地址</span>' : ''}
+                      </p>
+                    </div>
+                    <div class="btn-group">
+                      <a href="/profile/addresses/${address.id}/edit" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-edit"></i> 编辑
+                      </a>
+                      ${!address.isDefault ? `
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="setDefaultAddress('${address.id}')">
+                          <i class="fas fa-star"></i> 设为默认
+                        </button>
+                      ` : ''}
+                      <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteAddress('${address.id}')">
+                        <i class="fas fa-trash"></i> 删除
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `).join('');
+          })
+          .catch(error => {
+            console.error('Error loading addresses:', error);
+            addressListContainer.innerHTML = `
+              <div class="alert alert-danger">
+                加载地址失败，请稍后重试。
+              </div>
+            `;
+            showToast('error', '加载地址失败，请稍后重试');
+          });
+      }
+
+      function saveAddress (form) {
+        const formData = new FormData(form);
+        const addressId = form.querySelector('#addressId').value;
+
+        const addressData = {
+          id: addressId || null,
+          receiverName: formData.get('receiverName'),
+          receiverPhone: formData.get('receiverPhone'),
+          shippingProvince: formData.get('shippingProvince'),
+          shippingCity: formData.get('shippingCity'),
+          shippingDistrict: formData.get('shippingDistrict'),
+          detailedAddress: formData.get('detailedAddress'),
+          isDefault: formData.get('isDefault') === 'on'
+        };
+
+        const url = addressId ?
+          `/profile/addresses/${addressId}/update` :
+          '/profile/addresses/add';
+
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(addressData)
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (!data.success) {
+              throw new Error(data.message || '保存地址失败');
+            }
+
+            addressModal.hide();
+            loadAddressList();
+            showToast('success', addressId ? '地址更新成功' : '地址添加成功');
+          })
+          .catch(error => {
+            console.error('Error saving address:', error);
+            showToast('error', error.message || '保存地址失败，请重试');
+          });
+      }
+
+      function deleteAddress (addressId) {
+        if (!confirm('确定要删除这个地址吗？')) {
+          return;
+        }
+
+        fetch(`/profile/addresses/${addressId}/delete`, {
+          method: 'POST',
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              showToast('success', '删除成功');
+              loadAddressList();
+            } else {
+              throw new Error(data.message || '删除失败');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showToast('error', error.message || '删除失败，请重试');
+          });
+      }
+
+      function setDefaultAddress (addressId) {
+        fetch(`/profile/addresses/${addressId}/set-default`, {
+          method: 'POST',
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire('成功', '设置默认地址成功', 'success').then(() => {
+                loadAddressList();
+              });
+            } else {
+              Swal.fire('失败', data.message || '设置失败', 'error');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            Swal.fire('失败', '设置失败，请稍后重试', 'error');
+          });
+      }
+
+      function showToast (type, message) {
+        const toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) {
+          console.error('Toast container not found');
+          alert(message); // 如果找不到toast容器，使用普通alert
+          return;
+        }
+
+        const toastHtml = `
+          <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+              <div class="toast-body">
+                ${message}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+          </div>
+        `;
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        const toastElement = toastContainer.lastElementChild;
+        const toast = new bootstrap.Toast(toastElement, {
+          autohide: true,
+          delay: 3000
+        });
+        toast.show();
+
+        // 在toast隐藏后移除元素
+        toastElement.addEventListener('hidden.bs.toast', () => {
+          toastElement.remove();
+        });
+      }
+
+      function handleAvatarUpload (input) {
+        if (input.files && input.files[0]) {
+          const formData = new FormData();
+          formData.append('avatar', input.files[0]);
+
+          fetch('/user/avatar', {
+            method: 'POST',
+            headers: {
+            },
+            body: formData
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('上传失败');
+              }
+              return response.json();
+            })
+            .then(data => {
+              document.getElementById('avatarPreview').src = '/uploads/avatars/' + data.avatar_url;
+              showToast('success', '头像上传成功');
+            })
+            .catch(error => {
+              console.error('上传失败:', error);
+              showToast('error', '头像上传失败，请稍后重试');
+            });
+        }
+      }
+
+      // 加载可领取的优惠券
+      function loadAvailableCoupons () {
+        console.log('Fetching available coupons...');
+        fetch('/api/coupons/available', {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'include'
+        })
+          .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Available coupons data:', data);
+            const tbody = document.querySelector('#availableCouponsTable tbody');
+            if (!tbody) {
+              console.error('Available coupons table not found');
+              return;
+            }
+
+            if (!data || data.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="6" class="text-center">暂无可领取的优惠券</td></tr>';
+              return;
+            }
+
+            tbody.innerHTML = data.map(coupon => `
+              <tr>
+                <td>${coupon.name}</td>
+                <td>${coupon.type === 'DISCOUNT' ? '折扣券' : '满减券'}</td>
+                <td>${coupon.type === 'DISCOUNT' ? coupon.value + '折' : '¥' + coupon.value}</td>
+                <td>满¥${coupon.minPurchase}</td>
+                <td>${new Date(coupon.startTime).toLocaleDateString()} 至 ${new Date(coupon.endTime).toLocaleDateString()}</td>
+                <td>
+                  <button class="btn btn-primary btn-sm" onclick="claimCoupon(${coupon.id})">领取</button>
+                </td>
+              </tr>
+            `).join('');
+          })
+          .catch(error => {
+            console.error('Error loading available coupons:', error);
+            const tbody = document.querySelector('#availableCouponsTable tbody');
+            if (tbody) {
+              tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">加载优惠券失败，请稍后重试</td></tr>';
+            }
+          });
+      }
+
+      // 加载用户的优惠券
+      function loadUserCoupons () {
+        console.log('Fetching user coupons...');
+        fetch('/api/coupons/my/with-status', {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'include'
+        })
+          .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('User coupons data:', data);
+            const tbody = document.querySelector('#userCouponsTable tbody');
+            if (!tbody) {
+              console.error('User coupons table not found');
+              return;
+            }
+
+            if (!data || data.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="7" class="text-center">暂无优惠券</td></tr>';
+              return;
+            }
+
+            tbody.innerHTML = data.map(coupon => `
+              <tr>
+                <td>${coupon.name}</td>
+                <td>${coupon.type === 'DISCOUNT' ? '折扣券' : '满减券'}</td>
+                <td>${coupon.type === 'DISCOUNT' ? coupon.value + '折' : '¥' + coupon.value}</td>
+                <td>满¥${coupon.minPurchase}</td>
+                <td>${new Date(coupon.startTime).toLocaleDateString()} 至 ${new Date(coupon.endTime).toLocaleDateString()}</td>
+                <td>${coupon.used ? '已使用' : '未使用'}</td>
+                <td>
+                  ${!coupon.used ?
+                `<a href="/" class="btn btn-success btn-sm">去使用</a>` :
+                `<span class="text-muted">已使用</span>`
+              }
+                </td>
+              </tr>
+            `).join('');
+          })
+          .catch(error => {
+            console.error('Error loading user coupons:', error);
+            const tbody = document.querySelector('#userCouponsTable tbody');
+            if (tbody) {
+              tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">加载优惠券失败，请稍后重试</td></tr>';
+            }
+          });
+      }
+
+      // 领取优惠券
+      function claimCoupon (couponId) {
+        console.log('Claiming coupon:', couponId);
+        fetch(`/api/coupons/${couponId}/claim`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'include'
+        })
+          .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+              if (response.status === 403) {
+                throw new Error('您没有权限领取优惠券');
+              }
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Claim response:', data);
+            if (data.success) {
+              showToast('success', '优惠券领取成功');
+              // 重新加载优惠券列表
+              loadAvailableCoupons();
+              loadUserCoupons();
+            } else {
+              throw new Error(data.message || '领取失败，可能原因：优惠券已过期、已领取过或库存不足');
+            }
+          })
+          .catch(error => {
+            console.error('Error claiming coupon:', error);
+            showToast('error', error.message || '领取失败，请稍后重试');
+          });
+      }
+
+      // 修改充值对话框函数
+      function showRechargeDialog () {
+        Swal.fire({
+          title: '充值到钱包',
+          input: 'number',
+          inputLabel: '请输入充值金额',
+          inputAttributes: {
+            min: 1,
+            step: 0.01
+          },
+          showCancelButton: true,
+          confirmButtonText: '确认充值',
+          cancelButtonText: '取消',
+          inputValidator: (value) => {
+            if (!value || isNaN(value) || parseFloat(value) <= 0) {
+              return '请输入有效的充值金额';
+            }
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const amount = parseFloat(result.value);
+            fetch('/profile/wallet/recharge', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ amount })
+            })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  Swal.fire('充值成功', '', 'success').then(() => location.reload());
+                } else {
+                  Swal.fire('充值失败', data.message || '充值失败', 'error');
+                }
+              })
+              .catch(() => Swal.fire('充值失败', '充值失败，请稍后重试', 'error'));
+          }
+        });
+      }
+
+      function showWithdrawDialog () {
+        Swal.fire({
+          title: '提现到银行卡',
+          input: 'number',
+          inputLabel: '请输入提现金额',
+          inputAttributes: {
+            min: 1,
+            step: 0.01
+          },
+          showCancelButton: true,
+          confirmButtonText: '确认提现',
+          cancelButtonText: '取消',
+          inputValidator: (value) => {
+            if (!value || isNaN(value) || parseFloat(value) <= 0) {
+              return '请输入有效的提现金额';
+            }
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const amount = parseFloat(result.value);
+            fetch('/profile/wallet/withdraw', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ amount })
+            })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  Swal.fire('提现成功', '', 'success').then(() => location.reload());
+                } else {
+                  Swal.fire('提现失败', data.message || '提现失败', 'error');
+                }
+              })
+              .catch(() => Swal.fire('提现失败', '提现失败，请稍后重试', 'error'));
+          }
+        });
+      }
+
+      // 修改地址相关函数
+      function showAddressDialog (addressData = null) {
+        const isEdit = addressData !== null;
+        Swal.fire({
+          title: isEdit ? '编辑地址' : '添加新地址',
+          html: `
+            <form id="addressForm" class="text-start">
+              <input type="hidden" id="addressId" value="${addressData?.id || ''}">
+              <div class="mb-3">
+                <label for="receiverName" class="form-label">收货人姓名 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="receiverName" value="${addressData?.receiverName || ''}" required>
+              </div>
+              <div class="mb-3">
+                <label for="receiverPhone" class="form-label">收货人电话 <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control" id="receiverPhone" value="${addressData?.receiverPhone || ''}" required>
+              </div>
+              <div class="mb-3">
+                <label for="shippingProvince" class="form-label">省份 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="shippingProvince" value="${addressData?.shippingProvince || ''}" required>
+              </div>
+              <div class="mb-3">
+                <label for="shippingCity" class="form-label">城市 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="shippingCity" value="${addressData?.shippingCity || ''}" required>
+              </div>
+              <div class="mb-3">
+                <label for="shippingDistrict" class="form-label">区/县 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="shippingDistrict" value="${addressData?.shippingDistrict || ''}" required>
+              </div>
+              <div class="mb-3">
+                <label for="detailedAddress" class="form-label">详细地址 <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="detailedAddress" required>${addressData?.detailedAddress || ''}</textarea>
+              </div>
+              <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="isDefault" ${addressData?.isDefault ? 'checked' : ''}>
+                <label class="form-check-label" for="isDefault">设为默认地址</label>
+              </div>
+            </form>
+          `,
+          showCancelButton: true,
+          confirmButtonText: '保存',
+          cancelButtonText: '取消',
+          preConfirm: () => {
+            const form = document.getElementById('addressForm');
+            const formData = {
+              id: document.getElementById('addressId').value || null,
+              receiverName: document.getElementById('receiverName').value,
+              receiverPhone: document.getElementById('receiverPhone').value,
+              shippingProvince: document.getElementById('shippingProvince').value,
+              shippingCity: document.getElementById('shippingCity').value,
+              shippingDistrict: document.getElementById('shippingDistrict').value,
+              detailedAddress: document.getElementById('detailedAddress').value,
+              isDefault: document.getElementById('isDefault').checked
+            };
+
+            // 表单验证
+            if (!formData.receiverName || !formData.receiverPhone || !formData.shippingProvince ||
+              !formData.shippingCity || !formData.shippingDistrict || !formData.detailedAddress) {
+              Swal.showValidationMessage('请填写所有必填字段');
+              return false;
+            }
+
+            return formData;
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const formData = result.value;
+            const url = formData.id ? `/profile/addresses/${formData.id}/update` : '/profile/addresses/add';
+
+            fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(formData)
+            })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  Swal.fire('成功', formData.id ? '地址更新成功' : '地址添加成功', 'success').then(() => {
+                    loadAddressList();
+                  });
+                } else {
+                  Swal.fire('失败', data.message || '操作失败', 'error');
+                }
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('失败', '操作失败，请稍后重试', 'error');
+              });
+          }
+        });
+      }
+
+      // 修改添加地址按钮的点击事件
+      document.querySelector('button[data-bs-target="#addressModal"]').addEventListener('click', (e) => {
+        e.preventDefault();
+        showAddressDialog();
+      });
+
+      // 修改编辑地址函数
+      function editAddress (addressId) {
+        fetch(`/profile/addresses/${addressId}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              showAddressDialog(data.address);
+            } else {
+              Swal.fire('失败', '获取地址信息失败', 'error');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            Swal.fire('失败', '获取地址信息失败，请稍后重试', 'error');
+          });
+      }
+
+      // 修改删除地址函数
+      function deleteAddress (addressId) {
+        Swal.fire({
+          title: '确认删除',
+          text: '确定要删除这个地址吗？',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: '确定删除',
+          cancelButtonText: '取消'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            fetch(`/profile/addresses/${addressId}/delete`, {
+              method: 'POST',
+            })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  Swal.fire('成功', '地址删除成功', 'success').then(() => {
+                    loadAddressList();
+                  });
+                } else {
+                  Swal.fire('失败', data.message || '删除失败', 'error');
+                }
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('失败', '删除失败，请稍后重试', 'error');
+              });
+          }
+        });
+      }
+
+      // 修改设置默认地址函数
+      function setDefaultAddress (addressId) {
+        fetch(`/profile/addresses/${addressId}/set-default`, {
+          method: 'POST',
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire('成功', '设置默认地址成功', 'success').then(() => {
+                loadAddressList();
+              });
+            } else {
+              Swal.fire('失败', data.message || '设置失败', 'error');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            Swal.fire('失败', '设置失败，请稍后重试', 'error');
+          });
+      }
+    </script>
+  </th:block>
+</body>
+
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title>附加信息</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <style>
+    .profile-section {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-label.required:after {
+      content: " *";
+      color: red;
+    }
+
+    .error-feedback {
+      color: #dc3545;
+      font-size: 0.875em;
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content" class="container py-4">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="profile-section">
+          <h4 class="mb-4">附加信息</h4>
+          <form id="additionalProfileForm" method="post" action="/profile/update-additional" class="needs-validation"
+            novalidate>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="bankAccountNumber" class="form-label">银行卡号</label>
+                <input type="text" class="form-control" id="bankAccountNumber" name="bankAccountNumber"
+                  th:value="${profile.bankAccountNumber}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="idCardImage" class="form-label">身份证图片</label>
+                <input type="file" class="form-control" id="idCardImage" name="idCardImage"
+                  accept="image/jpeg,image/png,application/pdf">
+                <div class="form-text">支持 JPG、PNG、PDF 格式，大小不超过5MB</div>
+                <div class="mt-2">
+                  <img id="idCardImagePreview" th:if="${profile.idCardImageUrl}"
+                    th:src="@{'/upload/' + ${profile.idCardImageUrl}}" class="img-thumbnail" style="max-width: 200px;">
+                  <small class="text-muted d-block mt-1">当前上传的身份证图片</small>
+                </div>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">保存更改</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('additionalProfileForm');
+      const idCardImageInput = document.getElementById('idCardImage');
+      const idCardImagePreview = document.getElementById('idCardImagePreview');
+      const submitButton = form.querySelector('button[type="submit"]');
+
+      // 文件上传验证
+      idCardImageInput.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+          // 验证文件类型
+          const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+          if (!allowedTypes.includes(file.type)) {
+            Swal.fire({
+              icon: 'error',
+              title: '文件类型错误',
+              text: '只支持 JPG、PNG、PDF 格式的文件'
+            });
+            this.value = '';
+            return;
+          }
+
+          // 验证文件大小（5MB）
+          const maxSize = 5 * 1024 * 1024; // 5MB
+          if (file.size > maxSize) {
+            Swal.fire({
+              icon: 'error',
+              title: '文件过大',
+              text: '文件大小不能超过 5MB'
+            });
+            this.value = '';
+            return;
+          }
+
+          // 如果是图片，显示预览
+          if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              idCardImagePreview.src = e.target.result;
+              idCardImagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+          } else {
+            // 如果是 PDF，显示 PDF 图标
+            idCardImagePreview.src = '/images/pdf-icon.png';
+            idCardImagePreview.style.display = 'block';
+          }
+        }
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        // 检查是否有文件被选择
+        const hasFile = idCardImageInput.files && idCardImageInput.files.length > 0;
+        const bankAccountNumber = document.getElementById('bankAccountNumber').value;
+
+        // 如果没有文件且银行卡号没有变化，显示提示
+        if (!hasFile && bankAccountNumber === /*[[${profile.bankAccountNumber}]]*/ '') {
+          Swal.fire({
+            icon: 'info',
+            title: '提示',
+            text: '请选择要上传的身份证图片或修改银行卡号'
+          });
+          return;
+        }
+
+        // 禁用提交按钮并显示加载状态
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 提交中...';
+
+        const formData = new FormData(this);
+
+        fetch('/profile/update-additional', {
+          method: 'POST',
+          body: formData
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire({
+                icon: 'success',
+                title: '更新成功',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+              }).then(() => {
+                // 如果更新了身份证图片，刷新页面以显示新图片
+                if (data.idCardImageUrl) {
+                  window.location.reload();
+                }
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: '更新失败',
+                text: data.message
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: '更新失败',
+              text: '发生错误，请稍后重试'
+            });
+          })
+          .finally(() => {
+            // 恢复提交按钮状态
+            submitButton.disabled = false;
+            submitButton.innerHTML = '保存更改';
+          });
+      });
+    });
+  </script>
+</body>
+
+</html>

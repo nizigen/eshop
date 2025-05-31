@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title th:text="${addressDto.id != null ? 'Edit Address' : 'Add New Address'}">Address Form</title>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container mt-4">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-body">
+              <h3 class="card-title text-center mb-4"
+                th:text="${addressDto.id != null ? 'Edit Address' : 'Add New Address'}">
+                Address Form</h3>
+
+              <!-- Alert Messages -->
+              <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <span th:text="${errorMessage}">Error</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+
+              <form th:action="@{/user/addresses/save}" method="post" class="needs-validation" novalidate>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="receiverName" class="form-label">收货人姓名</label>
+                    <input type="text" class="form-control" id="receiverName" th:field="*{receiverName}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('receiverName')}"
+                      th:errors="*{receiverName}">
+                      Please enter receiver name.
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label for="receiverPhone" class="form-label">收货人电话</label>
+                    <input type="tel" class="form-control" id="receiverPhone" th:field="*{receiverPhone}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('receiverPhone')}"
+                      th:errors="*{receiverPhone}">
+                      Please enter receiver phone.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-4 mb-3">
+                    <label for="province" class="form-label">省份</label>
+                    <input type="text" class="form-control" id="province" th:field="*{province}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('province')}" th:errors="*{province}">
+                      Please enter province.
+                    </div>
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label for="city" class="form-label">城市</label>
+                    <input type="text" class="form-control" id="city" th:field="*{city}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('city')}" th:errors="*{city}">
+                      Please enter city.
+                    </div>
+                  </div>
+
+                  <div class="col-md-4 mb-3">
+                    <label for="district" class="form-label">区/县</label>
+                    <input type="text" class="form-control" id="district" th:field="*{district}" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('district')}" th:errors="*{district}">
+                      Please enter district.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="detailedAddress" class="form-label">详细地址</label>
+                  <textarea class="form-control" id="detailedAddress" th:field="*{detailedAddress}" rows="3"
+                    required></textarea>
+                  <div class="invalid-feedback" th:if="${#fields.hasErrors('detailedAddress')}"
+                    th:errors="*{detailedAddress}">
+                    Please enter detailed address.
+                  </div>
+                </div>
+
+                <div class="mb-3 form-check">
+                  <input type="checkbox" class="form-check-input" id="isDefault" th:field="*{default}">
+                  <label class="form-check-label" for="isDefault">设为默认地址</label>
+                </div>
+
+                <div class="text-center">
+                  <button type="submit" class="btn btn-primary">保存</button>
+                  <a th:href="@{/user/addresses}" class="btn btn-secondary ms-2">返回</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Form validation
+    (function () {
+      'use strict'
+      var forms = document.querySelectorAll('.needs-validation')
+      Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+          form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+          }, false)
+        })
+    })()
+  </script>
+</body>
+
+</html>

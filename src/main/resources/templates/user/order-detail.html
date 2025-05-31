@@ -1,0 +1,532 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title>订单详情</title>
+  <style>
+    .order-status {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    .order-info {
+      background: #f8f9fa;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .order-info .row {
+      margin-bottom: 0.75rem;
+    }
+
+    .order-info .row:last-child {
+      margin-bottom: 0;
+    }
+
+    .product-image {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 0.5rem;
+      border: 1px solid #eee;
+    }
+
+    .product-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .product-details {
+      flex: 1;
+    }
+
+    .price {
+      color: #dc3545;
+      font-weight: 500;
+    }
+
+    .total-price {
+      font-size: 1.25rem;
+    }
+
+    .card {
+      border-radius: 1rem;
+      border: none;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      color: #495057;
+    }
+
+    .btn-main {
+      min-width: 120px;
+      font-size: 1rem;
+      border-radius: 2rem;
+    }
+
+    .btn-main:not(:last-child) {
+      margin-right: 1rem;
+    }
+
+    .back-btn {
+      border-radius: 2rem;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .order-detail-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    @media (max-width: 576px) {
+
+      .order-info,
+      .card {
+        padding: 1rem !important;
+      }
+
+      .product-image {
+        width: 48px;
+        height: 48px;
+      }
+
+      .card-body {
+        padding: 1rem !important;
+      }
+
+      .order-detail-title {
+        font-size: 1.1rem;
+      }
+    }
+
+    .rating {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .stars {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .stars i {
+      font-size: 1.5rem;
+      color: #ddd;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .stars i:hover,
+    .stars i.active {
+      color: #ffc107;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container py-4">
+      <div class="row justify-content-center">
+        <div class="col-lg-8 col-12">
+          <!-- 返回按钮 -->
+          <a href="/user/profile#orders" class="btn btn-outline-primary back-btn d-inline-flex align-items-center mb-3">
+            <i class="bi bi-arrow-left me-1"></i> 返回我的订单
+          </a>
+          <div class="card shadow mb-4">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                <div>
+                  <div class="order-detail-title mb-2">订单详情</div>
+                  <div class="text-muted">订单号：<span th:text="${order.orderNumber}" class="fw-medium"></span></div>
+                </div>
+                <div class="d-flex flex-column align-items-end">
+                  <div class="order-status mb-2" th:classappend="${order.status == 'PENDING_PAYMENT' ? 'bg-warning' :
+                  order.status == 'PENDING_DELIVERY' ? 'bg-info' :
+                  order.status == 'IN_TRANSIT' ? 'bg-primary text-white' :
+                  order.status == 'DELIVERED' ? 'bg-success' :
+                  order.status == 'COMPLETED' ? 'bg-success' :
+                  order.status == 'CANCELED' ? 'bg-secondary' :
+                  order.status == 'RETURN_REQUESTED' ? 'bg-warning' :
+                  order.status == 'RETURN_APPROVED' ? 'bg-info' :
+                  order.status == 'RETURN_REJECTED' ? 'bg-danger' :
+                  order.status == 'RETURN_COMPLETED' ? 'bg-secondary' :
+                  'bg-secondary'}" th:text="${order.status == 'PENDING_PAYMENT' ? '待付款' :
+                    order.status == 'PENDING_DELIVERY' ? '待发货' :
+                    order.status == 'IN_TRANSIT' ? '运输中' :
+                    order.status == 'DELIVERED' ? '已送达' :
+                    order.status == 'COMPLETED' ? '已完成' :
+                    order.status == 'CANCELED' ? '已取消' :
+                    order.status == 'RETURN_REQUESTED' ? '申请退货' :
+                    order.status == 'RETURN_APPROVED' ? '退货通过' :
+                    order.status == 'RETURN_REJECTED' ? '退货拒绝' :
+                    order.status == 'RETURN_COMPLETED' ? '退货完成' :
+                    order.status}">
+                    状态
+                  </div>
+                  <div class="text-muted small">
+                    更新时间：<span th:text="${#temporals.format(order.updatedAt, 'yyyy-MM-dd HH:mm')}"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 订单基本信息 -->
+              <div class="order-info mb-4">
+                <div class="section-title"><i class="bi bi-info-circle me-1"></i>订单信息</div>
+                <div class="row">
+                  <div class="col-md-4 col-6">下单时间：</div>
+                  <div class="col-md-8 col-6"><span
+                      th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></span></div>
+                </div>
+                <div class="row">
+                  <div class="col-md-4 col-6">交易方式：</div>
+                  <div class="col-md-8 col-6">
+                    <span th:if="${order.agreedOfflineTime == null}">快递配送</span>
+                    <span th:if="${order.agreedOfflineTime != null}">线下交易</span>
+                  </div>
+                </div>
+                <div class="row" th:if="${order.agreedOfflineTime != null}">
+                  <div class="col-md-4 col-6">线下时间：</div>
+                  <div class="col-md-8 col-6"><span th:text="${order.agreedOfflineTime}"></span></div>
+                </div>
+                <div class="row" th:if="${order.agreedOfflineLocation != null}">
+                  <div class="col-md-4 col-6">线下地点：</div>
+                  <div class="col-md-8 col-6"><span th:text="${order.agreedOfflineLocation}"></span></div>
+                </div>
+              </div>
+
+              <!-- 商品信息 -->
+              <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-body">
+                  <div class="section-title"><i class="bi bi-box-seam me-1"></i>商品信息</div>
+                  <div class="product-list">
+                    <div class="product-item mb-3 pb-3 border-bottom" th:each="item : ${order.items}">
+                      <div class="product-info">
+                        <img th:if="${item.productImageUrl != null}" th:src="${item.productImageUrl}" alt="商品图片"
+                          class="product-image">
+                        <div class="product-details">
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                              <div th:text="${item.productName}" class="fw-medium mb-1"></div>
+                            </div>
+                            <div class="text-end">
+                              <div class="price">¥<span th:text="${item.price}"></span></div>
+                              <div class="text-muted small">x<span th:text="${item.quantity}"></span></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- 价格汇总 -->
+                  <div class="mt-4">
+                    <div class="d-flex justify-content-end mb-2">
+                      <div class="text-muted me-3">商品总价：</div>
+                      <div>¥<span th:text="${order.totalAmount + order.deductedAmount}"></span></div>
+                    </div>
+                    <div class="d-flex justify-content-end mb-2" th:if="${order.deductedAmount > 0}">
+                      <div class="text-muted me-3">积分抵扣：</div>
+                      <div>-¥<span th:text="${order.deductedAmount}"></span></div>
+                    </div>
+                    <div class="d-flex justify-content-end total-price">
+                      <div class="me-3">实付金额：</div>
+                      <div class="price">¥<span th:text="${order.totalAmount}"></span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 操作按钮（仅在对应状态下显示） -->
+              <div class="d-flex justify-content-center mb-3 flex-wrap gap-2">
+                <button th:if="${order.status == 'PENDING_PAYMENT'}" class="btn btn-main btn-primary px-4"
+                  onclick="payOrder()">
+                  <i class="bi bi-credit-card"></i> 立即付款
+                </button>
+                <button th:if="${order.status == 'DELIVERED'}" class="btn btn-main btn-success px-4"
+                  data-bs-toggle="modal" data-bs-target="#confirmReceiptModal">
+                  <i class="bi bi-check-circle"></i> 确认收货
+                </button>
+                <button th:if="${order.status == 'COMPLETED' && !order.isReviewed}"
+                  class="btn btn-main btn-primary px-4" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                  <i class="bi bi-star"></i> 前往评价
+                </button>
+                <button th:if="${order.status == 'COMPLETED'}" class="btn btn-main btn-warning px-4"
+                  data-bs-toggle="modal" data-bs-target="#returnRequestModal">
+                  <i class="bi bi-arrow-return-left"></i> 申请退货
+                </button>
+                <button th:if="${order.status == 'RETURN_COMPLETED'}" class="btn btn-main btn-secondary px-4" disabled>
+                  <i class="bi bi-check2-all"></i> 退货完成
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 确认收货模态框 -->
+    <div class="modal fade" id="confirmReceiptModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">确认收货</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p>确认已收到商品吗？</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-success" onclick="confirmReceipt()">确认收货</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 申请退货模态框 -->
+    <div class="modal fade" id="returnRequestModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">申请退货</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="returnRequestForm">
+              <div class="mb-3">
+                <label for="returnReason" class="form-label">退货原因</label>
+                <select class="form-select" id="returnReason" required>
+                  <option value="">请选择退货原因</option>
+                  <option value="QUALITY_ISSUE">商品质量问题</option>
+                  <option value="WRONG_ITEM">商品与描述不符</option>
+                  <option value="DAMAGED">商品损坏</option>
+                  <option value="OTHER">其他原因</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="returnDescription" class="form-label">详细说明</label>
+                <textarea class="form-control" id="returnDescription" rows="3" required></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-warning" onclick="submitReturnRequest()">提交申请</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 评价模态框 -->
+    <div class="modal fade" id="reviewModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">商品评价</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="reviewForm">
+              <div class="mb-3">
+                <label class="form-label">商品评分</label>
+                <div class="rating">
+                  <div class="stars">
+                    <i class="bi bi-star" data-rating="1"></i>
+                    <i class="bi bi-star" data-rating="2"></i>
+                    <i class="bi bi-star" data-rating="3"></i>
+                    <i class="bi bi-star" data-rating="4"></i>
+                    <i class="bi bi-star" data-rating="5"></i>
+                  </div>
+                  <input type="hidden" id="productRating" name="productRating" value="0">
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">服务评分</label>
+                <div class="rating">
+                  <div class="stars">
+                    <i class="bi bi-star" data-rating="1"></i>
+                    <i class="bi bi-star" data-rating="2"></i>
+                    <i class="bi bi-star" data-rating="3"></i>
+                    <i class="bi bi-star" data-rating="4"></i>
+                    <i class="bi bi-star" data-rating="5"></i>
+                  </div>
+                  <input type="hidden" id="serviceRating" name="serviceRating" value="0">
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="productComment" class="form-label">商品评价</label>
+                <textarea class="form-control" id="productComment" name="productComment" rows="3" required></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="serviceComment" class="form-label">服务评价</label>
+                <textarea class="form-control" id="serviceComment" name="serviceComment" rows="3" required></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary" onclick="submitReview()">提交评价</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script th:inline="javascript">
+      function payOrder () {
+        const orderId = /*[[${order.id}]]*/ '';
+        fetch(`/api/orders/${orderId}/pay`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              // 如果返回支付URL，跳转到支付页面
+              if (data.data && data.data.payUrl) {
+                window.location.href = data.data.payUrl;
+              } else {
+                location.reload();
+              }
+            } else {
+              alert(data.message || '支付失败');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('支付失败，请稍后重试');
+          });
+      }
+
+      function confirmReceipt () {
+        const orderId = /*[[${order.id}]]*/ '';
+        fetch(`/api/orders/${orderId}/confirm-receipt`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              location.reload();
+            } else {
+              alert(data.message || '确认收货失败');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('确认收货失败，请稍后重试');
+          });
+      }
+
+      function submitReturnRequest () {
+        const orderId = /*[[${order.id}]]*/ '';
+        const reason = document.getElementById('returnReason').value;
+        const description = document.getElementById('returnDescription').value;
+
+        if (!reason || !description) {
+          alert('请填写完整的退货信息');
+          return;
+        }
+
+        fetch(`/api/orders/${orderId}/return-request`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            reason: reason,
+            description: description
+          })
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              location.reload();
+            } else {
+              alert(data.message || '提交退货申请失败');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('提交退货申请失败，请稍后重试');
+          });
+      }
+
+      // 评分功能
+      document.querySelectorAll('.stars i').forEach(star => {
+        star.addEventListener('click', function () {
+          const rating = this.dataset.rating;
+          const starsContainer = this.parentElement;
+          const ratingInput = starsContainer.nextElementSibling;
+
+          // 更新星星样式
+          starsContainer.querySelectorAll('i').forEach(s => {
+            s.classList.remove('bi-star-fill', 'active');
+            s.classList.add('bi-star');
+            if (s.dataset.rating <= rating) {
+              s.classList.remove('bi-star');
+              s.classList.add('bi-star-fill', 'active');
+            }
+          });
+
+          // 更新隐藏输入值
+          ratingInput.value = rating;
+        });
+      });
+
+      function submitReview () {
+        const orderId = /*[[${order.id}]]*/ '';
+        const productRating = document.getElementById('productRating').value;
+        const serviceRating = document.getElementById('serviceRating').value;
+        const productComment = document.getElementById('productComment').value;
+        const serviceComment = document.getElementById('serviceComment').value;
+
+        if (!productRating || !serviceRating || !productComment || !serviceComment) {
+          alert('请完整填写评价信息');
+          return;
+        }
+
+        fetch(`/api/orders/${orderId}/review`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            productRating: parseInt(productRating),
+            serviceRating: parseInt(serviceRating),
+            productComment: productComment,
+            serviceComment: serviceComment
+          })
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              location.reload();
+            } else {
+              alert(data.message || '提交评价失败');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('提交评价失败，请稍后重试');
+          });
+      }
+    </script>
+  </div>
+</body>
+
+</html>

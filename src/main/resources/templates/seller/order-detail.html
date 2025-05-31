@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title>订单详情</title>
+  <style>
+    .order-status {
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      font-weight: 500;
+    }
+
+    .order-info {
+      background: #f8f9fa;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .order-info .row {
+      margin-bottom: 0.75rem;
+    }
+
+    .order-info .row:last-child {
+      margin-bottom: 0;
+    }
+
+    .product-image {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 0.25rem;
+    }
+
+    .product-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .product-details {
+      flex: 1;
+    }
+
+    .price {
+      color: #dc3545;
+      font-weight: 500;
+    }
+
+    .total-price {
+      font-size: 1.25rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container-fluid">
+      <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-2">
+          <div class="list-group">
+            <a href="/seller/dashboard" class="list-group-item list-group-item-action">
+              <i class="bi bi-speedometer2"></i> 商家首页
+            </a>
+            <a href="/seller/products" class="list-group-item list-group-item-action">
+              <i class="bi bi-box"></i> 商品管理
+            </a>
+            <a href="/seller/orders" class="list-group-item list-group-item-action active">
+              <i class="bi bi-cart"></i> 订单管理
+            </a>
+            <a href="/seller/orders/pending" class="list-group-item list-group-item-action">
+              <i class="bi bi-clock"></i> 待处理订单
+            </a>
+            <a href="/seller/orders/pending-returns" class="list-group-item list-group-item-action">
+              <i class="bi bi-arrow-return-left"></i> 退货管理
+            </a>
+            <a href="/seller/reviews" class="list-group-item list-group-item-action">
+              <i class="bi bi-star"></i> 商品评价
+            </a>
+            <a href="/seller/profile" class="list-group-item list-group-item-action">
+              <i class="bi bi-gear"></i> 店铺设置
+            </a>
+          </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-10">
+          <!-- 订单状态和编号 -->
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h2 class="mb-2">订单详情</h2>
+              <div class="text-muted">订单号：<span th:text="${order.orderNumber}" class="fw-medium"></span></div>
+            </div>
+            <div class="d-flex flex-column align-items-end">
+              <div class="order-status mb-2" th:classappend="${
+                order.status == 'PENDING_PAYMENT' ? 'bg-warning' :
+                order.status == 'PENDING_DELIVERY' ? 'bg-info' :
+                order.status == 'IN_TRANSIT' ? 'bg-primary' :
+                order.status == 'DELIVERED' ? 'bg-purple' :
+                order.status == 'COMPLETED' ? 'bg-success' :
+                order.status == 'CANCELED' ? 'bg-secondary' :
+                order.status == 'RETURN_REQUESTED' ? 'bg-warning' :
+                order.status == 'RETURN_APPROVED' ? 'bg-info' :
+                'bg-danger'
+              }" th:text="${order.status.getDescription()}">订单状态</div>
+              <div class="text-muted small" th:if="${order.status == 'COMPLETED'}">
+                完成时间：<span th:text="${#temporals.format(order.completionTime, 'yyyy-MM-dd HH:mm')}"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Flash Messages -->
+          <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+
+          <!-- 订单基本信息 -->
+          <div class="order-info">
+            <div class="row">
+              <div class="col-md-3">买家信息：</div>
+              <div class="col-md-9">
+                <div class="d-flex align-items-center">
+                  <img
+                    th:if="${order.user != null && order.user.avatarUrl != null && !#strings.isEmpty(order.user.avatarUrl)}"
+                    th:src="@{'/uploads/' + ${order.user.avatarUrl}}" class="rounded-circle me-2"
+                    style="width: 40px; height: 40px; object-fit: cover;"
+                    onerror="this.onerror=null; this.src='/images/default-avatar.png';">
+                  <img
+                    th:unless="${order.user != null && order.user.avatarUrl != null && !#strings.isEmpty(order.user.avatarUrl)}"
+                    src="/images/default-avatar.png" class="rounded-circle me-2"
+                    style="width: 40px; height: 40px; object-fit: cover;">
+                  <div>
+                    <div th:text="${order.user != null ? order.user.username : '未知用户'}"></div>
+                    <small class="text-muted" th:text="${order.user != null ? order.user.phone : ''}"></small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-3">订单时间：</div>
+              <div class="col-md-9">
+                <div class="d-flex flex-column">
+                  <div>创建时间：<span th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm:ss')}"
+                      class="fw-medium"></span></div>
+                  <div th:if="${order.paymentTime}">支付时间：<span
+                      th:text="${#temporals.format(order.paymentTime, 'yyyy-MM-dd HH:mm:ss')}" class="fw-medium"></span>
+                  </div>
+                  <div th:if="${order.shipTime}">发货时间：<span
+                      th:text="${#temporals.format(order.shipTime, 'yyyy-MM-dd HH:mm:ss')}" class="fw-medium"></span>
+                  </div>
+                  <div th:if="${order.deliveryTime}">送达时间：<span
+                      th:text="${#temporals.format(order.deliveryTime, 'yyyy-MM-dd HH:mm:ss')}"
+                      class="fw-medium"></span></div>
+                  <div th:if="${order.completionTime}">完成时间：<span
+                      th:text="${#temporals.format(order.completionTime, 'yyyy-MM-dd HH:mm:ss')}"
+                      class="fw-medium"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-3">交易方式：</div>
+              <div class="col-md-9">
+                <div th:if="${order.agreedOfflineTime == null}">
+                  <span class="badge bg-info">快递配送</span>
+                  <div class="mt-2" th:if="${order.address}">
+                    <div>收货人：<span th:text="${order.address.receiverName}" class="fw-medium"></span></div>
+                    <div>联系电话：<span th:text="${order.address.receiverPhone}" class="fw-medium"></span></div>
+                    <div class="address-info">
+                      <p
+                        th:text="${order.address != null ? (order.address.shippingProvince + ' ' + order.address.shippingCity + ' ' + order.address.shippingDistrict + ' ' + order.address.detailedAddress) : '无地址信息'}">
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div th:if="${order.agreedOfflineTime != null}">
+                  <span class="badge bg-warning">线下交易</span>
+                  <div class="mt-2">
+                    <div>交易时间：<span th:text="${order.agreedOfflineTime}" class="fw-medium"></span></div>
+                    <div>交易地点：<span th:text="${order.agreedOfflineLocation}" class="fw-medium"></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row" th:if="${order.pointsDeducted > 0}">
+              <div class="col-md-3">积分使用：</div>
+              <div class="col-md-9">
+                使用 <span th:text="${order.pointsDeducted}" class="fw-medium"></span> 积分
+                抵扣 ¥<span th:text="${#numbers.formatDecimal(order.deductedAmount, 1, 2)}" class="fw-medium"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 商品信息 -->
+          <div class="card mb-4">
+            <div class="card-body">
+              <h5 class="card-title mb-4">商品信息</h5>
+              <div class="product-list">
+                <div class="product-item mb-3 pb-3 border-bottom" th:each="item : ${order.orderItems}">
+                  <div class="product-info">
+                    <img th:if="${item.product.primaryImage}" th:src="${item.product.primaryImage.displayUrl}"
+                      alt="商品图片" class="product-image">
+                    <div class="product-details">
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                          <div th:text="${item.productName}" class="fw-medium mb-1"></div>
+                          <div class="text-muted small" th:text="${item.product.description}"></div>
+                        </div>
+                        <div class="text-end">
+                          <div class="price">¥<span th:text="${#numbers.formatDecimal(item.price, 1, 2)}"></span></div>
+                          <div class="text-muted small">x<span th:text="${item.quantity}"></span></div>
+                        </div>
+                      </div>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">商品编号：<span th:text="${item.product.id}"></span></div>
+                        <div class="fw-medium">¥<span
+                            th:text="${#numbers.formatDecimal(item.price * item.quantity, 1, 2)}"></span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 价格汇总 -->
+              <div class="mt-4">
+                <div class="d-flex justify-content-end mb-2">
+                  <div class="text-muted me-3">商品总价：</div>
+                  <div>¥<span
+                      th:text="${#numbers.formatDecimal(order.totalAmount + order.deductedAmount, 1, 2)}"></span></div>
+                </div>
+                <div class="d-flex justify-content-end mb-2" th:if="${order.deductedAmount > 0}">
+                  <div class="text-muted me-3">积分抵扣：</div>
+                  <div>-¥<span th:text="${#numbers.formatDecimal(order.deductedAmount, 1, 2)}"></span></div>
+                </div>
+                <div class="d-flex justify-content-end total-price">
+                  <div class="me-3">实付金额：</div>
+                  <div class="price">¥<span th:text="${#numbers.formatDecimal(order.totalAmount, 1, 2)}"></span></div>
+                </div>
+              </div>
+
+              <!-- 订单操作按钮 -->
+              <div class="d-flex justify-content-end mt-4">
+                <button th:if="${order.status.name() == 'PENDING_DELIVERY'}" class="btn btn-primary"
+                  onclick="shipOrder()">发货</button>
+                <button th:if="${order.status.name() == 'IN_TRANSIT'}" class="btn btn-success"
+                  onclick="confirmDelivery()">确认送达</button>
+                <button th:if="${order.status.name() == 'RETURN_REQUESTED'}" class="btn btn-warning me-2"
+                  onclick="rejectReturn()">拒绝退货</button>
+                <button th:if="${order.status.name() == 'RETURN_REQUESTED'}" class="btn btn-success"
+                  onclick="approveReturn()">同意退货</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 退货信息 -->
+          <div class="card mb-4" th:if="${order.status.name() == 'RETURN_REQUESTED'}">
+            <div class="card-body">
+              <h5 class="card-title mb-4">退货申请信息</h5>
+              <div class="row mb-3">
+                <div class="col-md-3">申请时间：</div>
+                <div class="col-md-9" th:text="${#temporals.format(order.returnRequestTime, 'yyyy-MM-dd HH:mm:ss')}">
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3">退货原因：</div>
+                <div class="col-md-9" th:text="${order.returnReason}"></div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3">退货说明：</div>
+                <div class="col-md-9" th:text="${order.returnDescription}"></div>
+              </div>
+              <div class="row" th:if="${order.returnImages != null && !order.returnImages.isEmpty()}">
+                <div class="col-md-3">图片凭证：</div>
+                <div class="col-md-9">
+                  <div class="d-flex flex-wrap gap-2">
+                    <a th:each="image : ${order.returnImages}" th:href="${image}" target="_blank">
+                      <img th:src="${image}" class="img-thumbnail"
+                        style="width: 100px; height: 100px; object-fit: cover;">
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 处理订单的JavaScript -->
+  <th:block layout:fragment="scripts">
+    <script th:inline="javascript">
+      function shipOrder () {
+        if (!confirm('确定要发货吗？')) {
+          return;
+        }
+
+        const orderId = /*[[${order.id}]]*/ null;
+
+        fetch(`/seller/orders/${orderId}/ship`, {
+          method: 'POST'
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('发货成功');
+              location.reload();
+            } else {
+              alert('发货失败：' + data.message);
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('发货失败，请稍后重试');
+          });
+      }
+
+      function confirmDelivery () {
+        if (!confirm('确定要确认送达吗？')) {
+          return;
+        }
+
+        const orderId = /*[[${order.id}]]*/ null;
+
+        fetch(`/seller/orders/${orderId}/deliver`, {
+          method: 'POST'
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('确认送达成功');
+              location.reload();
+            } else {
+              alert('确认送达失败：' + data.message);
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('确认送达失败，请稍后重试');
+          });
+      }
+
+      function approveReturn () {
+        if (!confirm('确定要同意退货吗？同意后将自动退款给买家。')) {
+          return;
+        }
+
+        const orderId = /*[[${order.id}]]*/ null;
+
+        fetch(`/seller/orders/${orderId}/return/approve`, {
+          method: 'POST'
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('已同意退货申请');
+              location.reload();
+            } else {
+              alert('处理失败：' + data.message);
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('处理失败，请稍后重试');
+          });
+      }
+
+      function rejectReturn () {
+        if (!confirm('确定要拒绝退货吗？')) {
+          return;
+        }
+
+        const orderId = /*[[${order.id}]]*/ null;
+
+        fetch(`/seller/orders/${orderId}/return/reject`, {
+          method: 'POST'
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('已拒绝退货申请');
+              location.reload();
+            } else {
+              alert('处理失败：' + data.message);
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('处理失败，请稍后重试');
+          });
+      }
+    </script>
+  </th:block>
+</body>
+
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title>编辑用户</title>
+  <style>
+    .admin-sidebar {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 5px;
+    }
+
+    .admin-sidebar .nav-link {
+      color: #333;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+
+    .admin-sidebar .nav-link:hover {
+      background-color: #e9ecef;
+    }
+
+    .admin-sidebar .nav-link.active {
+      background-color: #0d6efd;
+      color: white;
+    }
+
+    .admin-sidebar .nav-link i {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container-fluid py-4">
+      <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-2">
+          <div class="admin-sidebar">
+            <h5 class="mb-3">管理菜单</h5>
+            <div class="nav flex-column">
+              <a href="/admin/dashboard" class="nav-link">
+                <i class="bi bi-speedometer2"></i> 仪表盘
+              </a>
+              <a href="/admin/users" class="nav-link active">
+                <i class="bi bi-people"></i> 用户管理
+              </a>
+              <a href="/admin/users/pending" class="nav-link">
+                <i class="bi bi-person-plus"></i> 待审核用户
+              </a>
+              <a href="/admin/sellers" class="nav-link">
+                <i class="bi bi-shop"></i> 商家管理
+              </a>
+              <a href="/admin/products" class="nav-link">
+                <i class="bi bi-box"></i> 商品管理
+              </a>
+              <a href="/admin/products/pending" class="nav-link">
+                <i class="bi bi-box-seam"></i> 待审核商品
+              </a>
+              <a href="/admin/orders" class="nav-link">
+                <i class="bi bi-cart"></i> 订单管理
+              </a>
+              <a href="/admin/coupons" class="nav-link">
+                <i class="bi bi-ticket-perforated"></i> 优惠券管理
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-10">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>编辑用户 (<span th:text="${user.username != null ? user.username : user.email}">User</span>)</h2>
+          </div>
+
+          <!-- 消息提示 -->
+          <div th:replace="~{fragments/message :: message}"></div>
+
+          <div class="card">
+            <div class="card-body">
+              <form th:action="@{/admin/users/{userId}/edit(userId=${user.id})}" th:object="${user}" method="post">
+                <!-- Hidden fields -->
+                <input type="hidden" th:field="*{id}" />
+                <input type="hidden" th:field="*{role}" />
+                <input type="hidden" th:field="*{password}" />
+
+                <div class="row">
+                  <!-- Username -->
+                  <div class="col-md-6 mb-3">
+                    <label for="username" class="form-label">用户名</label>
+                    <input type="text" class="form-control" id="username" th:field="*{username}">
+                    <div class="text-danger" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                  </div>
+
+                  <!-- Email -->
+                  <div class="col-md-6 mb-3">
+                    <label for="email" class="form-label">邮箱</label>
+                    <input type="email" class="form-control" id="email" th:field="*{email}">
+                    <small class="form-text text-muted">更改邮箱可能会失败，如果新邮箱已被使用。</small>
+                    <div class="text-danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                  </div>
+
+                  <!-- Phone -->
+                  <div class="col-md-6 mb-3">
+                    <label for="phone" class="form-label">电话</label>
+                    <input type="tel" class="form-control" id="phone" th:field="*{phone}">
+                    <small class="form-text text-muted">更改电话可能会失败，如果新号码已被使用。</small>
+                    <div class="text-danger" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
+                  </div>
+
+                  <!-- City -->
+                  <div class="col-md-6 mb-3">
+                    <label for="city" class="form-label">城市</label>
+                    <input type="text" class="form-control" id="city" th:field="*{city}">
+                    <div class="text-danger" th:if="${#fields.hasErrors('city')}" th:errors="*{city}"></div>
+                  </div>
+
+                  <!-- Gender -->
+                  <div class="col-md-6 mb-3">
+                    <label for="gender" class="form-label">性别</label>
+                    <select class="form-select" id="gender" th:field="*{gender}">
+                      <option value="">请选择性别</option>
+                      <option th:each="gen : ${allGenders}" th:value="${gen}" th:text="${gen.name()}"></option>
+                    </select>
+                    <div class="text-danger" th:if="${#fields.hasErrors('gender')}" th:errors="*{gender}"></div>
+                  </div>
+
+                  <!-- Status -->
+                  <div class="col-md-6 mb-3">
+                    <label for="status" class="form-label">状态</label>
+                    <select class="form-select" id="status" th:field="*{status}" required>
+                      <option th:each="stat : ${allStatuses}" th:value="${stat}" th:text="${stat.name()}"></option>
+                    </select>
+                    <div class="text-danger" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></div>
+                  </div>
+
+                  <!-- Display Role (Readonly) -->
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">角色（只读）</label>
+                    <input type="text" class="form-control" th:value="*{role.name()}" readonly>
+                  </div>
+                </div>
+
+                <div class="mt-4">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i> 保存更改
+                  </button>
+                  <a th:href="@{/admin/users}" class="btn btn-secondary">
+                    <i class="bi bi-x-lg"></i> 取消
+                  </a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/main}">
+
+<head>
+  <title>用户管理</title>
+  <style>
+    .admin-sidebar {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 5px;
+    }
+
+    .admin-sidebar .nav-link {
+      color: #333;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+
+    .admin-sidebar .nav-link:hover {
+      background-color: #e9ecef;
+    }
+
+    .admin-sidebar .nav-link.active {
+      background-color: #0d6efd;
+      color: white;
+    }
+
+    .admin-sidebar .nav-link i {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container-fluid py-4">
+      <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-2">
+          <div class="admin-sidebar">
+            <h5 class="mb-3">管理菜单</h5>
+            <div class="nav flex-column">
+              <a href="/admin/dashboard" class="nav-link">
+                <i class="bi bi-speedometer2"></i> 仪表盘
+              </a>
+              <a href="/admin/users" class="nav-link active">
+                <i class="bi bi-people"></i> 用户管理
+              </a>
+              <a href="/admin/users/pending" class="nav-link">
+                <i class="bi bi-person-plus"></i> 待审核用户
+              </a>
+              <a href="/admin/sellers" class="nav-link">
+                <i class="bi bi-shop"></i> 商家管理
+              </a>
+              <a href="/admin/products" class="nav-link">
+                <i class="bi bi-box"></i> 商品管理
+              </a>
+              <a href="/admin/products/pending" class="nav-link">
+                <i class="bi bi-box-seam"></i> 待审核商品
+              </a>
+              <a href="/admin/orders" class="nav-link">
+                <i class="bi bi-cart"></i> 订单管理
+              </a>
+              <a href="/admin/coupons" class="nav-link">
+                <i class="bi bi-ticket-perforated"></i> 优惠券管理
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-10">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>用户管理</h2>
+          </div>
+
+          <!-- 消息提示 -->
+          <div th:replace="~{fragments/message :: message}"></div>
+
+          <div class="card">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>ID</th>
+                      <th>用户名</th>
+                      <th>邮箱</th>
+                      <th>电话</th>
+                      <th>角色</th>
+                      <th>状态</th>
+                      <th>注册时间</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:if="${users.isEmpty()}">
+                      <td colspan="8" class="text-center py-4">暂无用户数据</td>
+                    </tr>
+                    <tr th:each="user : ${users}">
+                      <td th:text="${user.id}"></td>
+                      <td th:text="${user.username}"></td>
+                      <td th:text="${user.email}"></td>
+                      <td th:text="${user.phone}"></td>
+                      <td>
+                        <span class="badge bg-secondary"
+                          th:if="${user instanceof T(com.example.eshop.model.Admin)}">管理员</span>
+                        <span class="badge bg-info"
+                          th:if="${user instanceof T(com.example.eshop.model.Customer)}">普通用户</span>
+                        <span class="badge bg-primary"
+                          th:if="${user instanceof T(com.example.eshop.model.Seller)}">商家</span>
+                      </td>
+                      <td>
+                        <span th:switch="${user.status}">
+                          <span th:case="${T(com.example.eshop.model.UserStatus).ACTIVE}" class="badge bg-success"
+                            th:text="${user.status}"></span>
+                          <span th:case="${T(com.example.eshop.model.UserStatus).PENDING}"
+                            class="badge bg-warning text-dark" th:text="${user.status}"></span>
+                          <span th:case="${T(com.example.eshop.model.UserStatus).BANNED}" class="badge bg-danger"
+                            th:text="${user.status}"></span>
+                          <span th:case="${T(com.example.eshop.model.UserStatus).REJECTED}" class="badge bg-secondary"
+                            th:text="${user.status}"></span>
+                          <span th:case="*" class="badge bg-light text-dark" th:text="${user.status}"></span>
+                        </span>
+                      </td>
+                      <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                      <td>
+                        <div class="btn-group">
+                          <a th:href="@{/admin/users/{userId}/edit(userId=${user.id})}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-pencil"></i>
+                          </a>
+                          <form th:action="@{/admin/users/{userId}/delete(userId=${user.id})}" method="post"
+                            class="d-inline" onsubmit="return confirm('确定要删除这个用户吗？此操作无法撤销。');">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

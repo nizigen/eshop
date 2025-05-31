@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title>Submit Review</title>
+  <!-- Add specific CSS if needed -->
+  <style>
+    .rating-stars {
+      display: inline-block;
+      font-size: 1.5rem;
+      /* Adjust size */
+    }
+
+    .rating-stars input[type="radio"] {
+      display: none;
+      /* Hide the actual radio buttons */
+    }
+
+    .rating-stars label {
+      color: #ccc;
+      /* Default star color */
+      cursor: pointer;
+      padding: 0 0.1em;
+    }
+
+    /* Style stars on hover and when selected */
+    .rating-stars input[type="radio"]:checked~label,
+    .rating-stars label:hover,
+    .rating-stars label:hover~label {
+      color: #f5c518;
+      /* Gold color for selected/hovered stars */
+    }
+
+    /* Ensure hover effect applies from right to left */
+    .rating-stars input[type="radio"]:hover~label {
+      color: #f5c518;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div layout:fragment="content">
+    <div class="container mt-4">
+      <h2>Submit Review For: <span th:text="${orderItem.product.name}">Product Name</span></h2>
+      <hr />
+
+      <div th:if="${orderItem != null}" class="mb-3">
+        <img th:if="${orderItem.product.getPrimaryImage() != null}"
+          th:src="@{/images/{path}(path=${orderItem.product.getPrimaryImage().imagePath})}" alt="Product Image"
+          style="max-width: 100px; max-height: 100px; object-fit: cover; border: 1px solid #ddd; padding: 3px;">
+        <span th:unless="${orderItem.product.getPrimaryImage() != null}">(No Image)</span>
+      </div>
+
+      <!-- Display general errors -->
+      <div th:if="${errorMessage}" class="alert alert-danger" role="alert">
+        Error: <span th:text="${errorMessage}"></span>
+      </div>
+      <div th:if="${param.generalError}" class="alert alert-danger" role="alert">
+        Error: <span th:text="${param.generalError}"></span>
+      </div>
+
+      <form th:action="@{/reviews/add}" th:object="${reviewDto}" method="post">
+        <!-- Hidden field for orderItemId -->
+        <input type="hidden" name="orderItemId" th:value="${orderItem.id}" />
+
+        <!-- Product Rating -->
+        <div class="mb-3">
+          <label class="form-label">Your Rating for the Product:</label>
+          <div class="rating-stars">
+            <!-- Generate stars from 5 down to 1 -->
+            <input type="radio" id="star5" th:field="*{productRating}" value="5" required /><label for="star5">★</label>
+            <input type="radio" id="star4" th:field="*{productRating}" value="4" required /><label for="star4">★</label>
+            <input type="radio" id="star3" th:field="*{productRating}" value="3" required /><label for="star3">★</label>
+            <input type="radio" id="star2" th:field="*{productRating}" value="2" required /><label for="star2">★</label>
+            <input type="radio" id="star1" th:field="*{productRating}" value="1" required /><label for="star1">★</label>
+          </div>
+          <div class="text-danger" th:if="${#fields.hasErrors('productRating')}" th:errors="*{productRating}"></div>
+        </div>
+
+        <!-- Product Comment -->
+        <div class="mb-3">
+          <label for="productComment" class="form-label">Your Comment about the Product:</label>
+          <textarea id="productComment" th:field="*{productComment}" class="form-control" rows="5"></textarea>
+          <div class="text-danger" th:if="${#fields.hasErrors('productComment')}" th:errors="*{productComment}"></div>
+        </div>
+
+        <!-- TODO: Add fields for Seller Rating/Comment if needed -->
+
+        <hr />
+        <button type="submit" class="btn btn-primary">Submit Review</button>
+        <a th:href="@{/user/orders}" class="btn btn-secondary">Cancel</a>
+      </form>
+
+    </div>
+  </div>
+
+</body>
+
+</html>

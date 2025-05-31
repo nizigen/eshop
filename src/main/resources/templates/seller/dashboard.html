@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/main}">
+
+<head>
+  <title>商家首页</title>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container-fluid">
+      <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-2">
+          <div class="list-group">
+            <a href="/seller/dashboard" class="list-group-item list-group-item-action active">
+              <i class="bi bi-speedometer2"></i> 商家首页
+            </a>
+            <a href="/seller/products" class="list-group-item list-group-item-action">
+              <i class="bi bi-box"></i> 商品管理
+            </a>
+            <a href="/seller/orders" class="list-group-item list-group-item-action">
+              <i class="bi bi-cart"></i> 订单管理
+            </a>
+            <a href="/seller/orders/pending" class="list-group-item list-group-item-action">
+              <i class="bi bi-clock"></i> 待处理订单
+            </a>
+            <a href="/seller/orders/pending-returns" class="list-group-item list-group-item-action">
+              <i class="bi bi-arrow-return-left"></i> 退货管理
+            </a>
+            <a href="/seller/reviews" class="list-group-item list-group-item-action">
+              <i class="bi bi-star"></i> 商品评价
+            </a>
+            <a href="/seller/profile" class="list-group-item list-group-item-action">
+              <i class="bi bi-gear"></i> 店铺设置
+            </a>
+          </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <main class="col-md-10">
+          <div class="row mt-4">
+            <div class="col-md-4 mb-4">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">商品统计</h5>
+                  <div class="d-flex align-items-center mb-3">
+                    <div class="fs-2 me-3" th:text="${productCount}">0</div>
+                    <div class="text-muted">总商品数</div>
+                  </div>
+                  <div class="d-flex justify-content-between text-muted">
+                    <span>在售商品: <strong th:text="${activeProductCount}">0</strong></span>
+                    <span>待审核: <strong th:text="${pendingProductCount}">0</strong></span>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <a href="/seller/products" class="btn btn-sm btn-outline-primary">查看所有商品</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">订单统计</h5>
+                  <div class="d-flex align-items-center mb-3">
+                    <div class="fs-2 me-3" th:text="${orderCount}">0</div>
+                    <div class="text-muted">总订单数</div>
+                  </div>
+                  <div class="d-flex justify-content-between text-muted">
+                    <span>待处理: <strong th:text="${pendingOrderCount}">0</strong></span>
+                    <span>已完成: <strong th:text="${completedOrderCount}">0</strong></span>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <a href="/seller/orders" class="btn btn-sm btn-outline-primary">查看所有订单</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">店铺信息</h5>
+                  <div class="d-flex align-items-center mb-3">
+                    <div class="fs-2 me-3" th:text="${reviewCount}">0</div>
+                    <div class="text-muted">总评价数</div>
+                  </div>
+                  <div class="d-flex justify-content-between text-muted">
+                    <span>好评率: <strong th:text="${positiveRatePercent}">0%</strong></span>
+                    <span>服务评分: <strong th:text="${serviceRating}">5.0</strong></span>
+                  </div>
+                  <div class="mt-3">
+                    <div class="d-flex align-items-center">
+                      <div class="me-2">
+                        <i class="bi bi-trophy-fill text-warning"></i>
+                      </div>
+                      <div>
+                        <span class="text-muted">商家等级：</span>
+                        <strong th:text="${seller.sellerDetails.sellerLevel}">5</strong>
+                        <span class="text-muted ms-1" th:text="${seller.sellerDetails.sellerLevel == 1 ? '(钻石商家)' : 
+                                                              seller.sellerDetails.sellerLevel == 2 ? '(金牌商家)' : 
+                                                              seller.sellerDetails.sellerLevel == 3 ? '(银牌商家)' : 
+                                                              seller.sellerDetails.sellerLevel == 4 ? '(铜牌商家)' : 
+                                                              '(普通商家)'}">(钻石商家)</span>
+                      </div>
+                    </div>
+                    <div class="text-muted small mt-1" th:text="${seller.sellerDetails.sellerLevel == 1 ? '手续费率：0.1%' : 
+                                                              seller.sellerDetails.sellerLevel == 2 ? '手续费率：0.2%' : 
+                                                              seller.sellerDetails.sellerLevel == 3 ? '手续费率：0.5%' : 
+                                                              seller.sellerDetails.sellerLevel == 4 ? '手续费率：0.75%' : 
+                                                              '手续费率：1%'}">手续费率：1%</div>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <a href="/seller/reviews" class="btn btn-sm btn-outline-primary">查看所有评价</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Orders -->
+          <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">最近订单</h5>
+              <a href="/seller/orders" class="btn btn-sm btn-outline-primary">查看全部</a>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>订单号</th>
+                    <th>金额</th>
+                    <th>状态</th>
+                    <th>下单时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="order : ${recentOrders}">
+                    <td th:text="${order.orderNumber}">ORD123456</td>
+                    <td th:text="${#numbers.formatCurrency(order.totalAmount)}">$99.99</td>
+                    <td>
+                      <span class="badge bg-warning"
+                        th:if="${order.status == T(com.example.eshop.model.OrderStatus).PENDING_DELIVERY}">待发货</span>
+                      <span class="badge bg-success"
+                        th:if="${order.status == T(com.example.eshop.model.OrderStatus).COMPLETED}">已完成</span>
+                      <span class="badge bg-secondary"
+                        th:if="${order.status == T(com.example.eshop.model.OrderStatus).CANCELED}">已取消</span>
+                    </td>
+                    <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</td>
+                  </tr>
+                  <tr th:if="${#lists.isEmpty(recentOrders)}">
+                    <td colspan="4" class="text-center">暂无订单</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Recent Reviews -->
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">最新评价</h5>
+              <a href="/seller/reviews" class="btn btn-sm btn-outline-primary">查看全部</a>
+            </div>
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>评分</th>
+                    <th>评价内容</th>
+                    <th>评价人</th>
+                    <th>评价时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="review : ${recentReviews}">
+                    <td>
+                      <div class="text-warning">
+                        <i class="bi bi-star-fill"
+                          th:each="i : ${#numbers.sequence(1, review.sellerServiceRating > 5 ? 5 : review.sellerServiceRating)}"></i>
+                       
+                      </div>
+                    </td>
+                    <td th:text="${review.sellerServiceComment}">Review comment</td>
+                    <td th:text="${review.user != null ? review.user.username : ''}"></td>
+                    <td th:text="${#temporals.format(review.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</td>
+                  </tr>
+                  <tr th:if="${#lists.isEmpty(recentReviews)}">
+                    <td colspan="4" class="text-center">暂无评价</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

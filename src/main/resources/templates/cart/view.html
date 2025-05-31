@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title>购物车</title>
+  <style>
+    .cart-title {
+      font-size: 2.2rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      letter-spacing: 2px;
+    }
+
+    .cart-table th,
+    .cart-table td {
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    .cart-table th {
+      background: #f8f9fa;
+      font-size: 1.1rem;
+    }
+
+    .cart-table tbody tr {
+      border-bottom: 1px solid #eee;
+    }
+
+    .product-image {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-right: 12px;
+    }
+
+    .product-info {
+      text-align: left;
+    }
+
+    .product-name {
+      font-weight: 500;
+      font-size: 1.1rem;
+      color: #222;
+      margin-bottom: 0.25rem;
+    }
+
+    .product-link {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .product-link:hover {
+      text-decoration: underline;
+    }
+
+    .quantity-input {
+      width: 50px;
+      text-align: center;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      margin: 0 4px;
+    }
+
+    .btn-qty {
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      font-size: 1.2rem;
+      line-height: 1.2rem;
+    }
+
+    .btn-danger,
+    .btn-warning,
+    .btn-primary {
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    .cart-summary {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px 30px;
+      margin-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.2rem;
+    }
+
+    .cart-summary .total-label {
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    .cart-summary .total-value {
+      color: #e4393c;
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+
+    .cart-actions {
+      margin-top: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .empty-cart-box {
+      text-align: center;
+      padding: 60px 0;
+      color: #888;
+    }
+
+    .empty-cart-box i {
+      font-size: 4rem;
+      color: #dee2e6;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container mt-4">
+      <h2 class="cart-title">购物车</h2>
+
+      <!-- 空购物车提示 -->
+      <div th:if="${#lists.isEmpty(cartItems)}" class="empty-cart-box">
+        <i class="bi bi-cart-x"></i>
+        <h3 class="mt-3">购物车是空的</h3>
+        <p class="text-muted">快去添加一些商品吧！</p>
+        <a th:href="@{/products}" class="btn btn-primary mt-3">去逛逛</a>
+      </div>
+
+      <!-- 购物车内容 -->
+      <div th:if="${not #lists.isEmpty(cartItems)}" class="card shadow-sm">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table cart-table align-middle">
+              <thead>
+                <tr>
+                  <th>商品</th>
+                  <th>单价</th>
+                  <th>数量</th>
+                  <th>小计</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="item : ${cartItems}">
+                  <td>
+                    <div class="d-flex align-items-center product-info">
+                      <img th:if="${not #lists.isEmpty(item.product.images)}"
+                        th:src="${item.product.getPrimaryImage().imageUrl}" class="product-image" alt="商品图片">
+                      <div>
+                        <a th:href="@{'/products/' + ${item.product.id}}" th:text="${item.product.name}"
+                          class="product-link product-name">商品名称</a>
+                      </div>
+                    </div>
+                  </td>
+                  <td th:text="${#numbers.formatDecimal(item.product.price, 1, 2)}" class="item-price">0.00</td>
+                  <td>
+                    <div class="d-flex align-items-center justify-content-center">
+                      <button class="btn btn-outline-secondary btn-qty" onclick="updateQuantity(this, -1)"
+                        th:data-item-id="${item.id}">-</button>
+                      <input type="number" class="quantity-input" th:value="${item.quantity}"
+                        th:data-item-id="${item.id}" onchange="quantityChanged(this)">
+                      <button class="btn btn-outline-secondary btn-qty" onclick="updateQuantity(this, 1)"
+                        th:data-item-id="${item.id}">+</button>
+                    </div>
+                  </td>
+                  <td class="item-subtotal" th:text="${#numbers.formatDecimal(item.subtotal, 1, 2)}">0.00</td>
+                  <td>
+                    <button class="btn btn-danger btn-sm" th:onclick="'removeItem(' + ${item.id} + ')'">删除</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="cart-summary">
+            <div class="total-label">总计：</div>
+            <div class="total-value" th:text="${#numbers.formatDecimal(cartTotal, 1, 2)}">0.00</div>
+            <button class="btn btn-warning btn-sm ms-3" onclick="clearCart()">清空购物车</button>
+          </div>
+
+          <div class="cart-actions">
+            <a th:href="@{/products}" class="btn btn-secondary">继续购物</a>
+            <a th:href="@{/orders/create}" class="btn btn-primary">去结算</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 购物车操作的JavaScript -->
+    <script th:inline="javascript">
+      function quantityChanged (input) {
+        const itemId = input.getAttribute('data-item-id');
+        const quantity = parseInt(input.value);
+        const row = input.closest('tr');
+        const price = parseFloat(row.querySelector('.item-price').textContent);
+        const subtotal = price * quantity;
+
+        if (quantity < 1) {
+          input.value = 1;
+          return;
+        }
+
+        // 禁用输入框，防止重复提交
+        input.disabled = true;
+
+        // 发送请求更新购物车
+        const formData = new FormData();
+        formData.append('quantity', quantity);
+
+        // 使用正确的URL格式
+        const url = `/cart/update/${itemId}`;
+
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams(formData)
+        })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.text();
+          })
+          .then(result => {
+            if (result.startsWith('success')) {
+              // 更新小计金额
+              row.querySelector('.item-subtotal').textContent = subtotal.toFixed(2);
+              // 更新总金额
+              updateCartTotal();
+              showToast('success', '数量更新成功');
+            } else {
+              // 显示错误信息
+              const errorMsg = result.startsWith('error:') ? result.substring(6) : '更新失败，请重试';
+              showToast('error', errorMsg);
+              // 恢复原来的数量
+              input.value = input.getAttribute('data-original-value') || '1';
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showToast('error', '网络错误，请重试');
+            // 恢复原来的数量
+            input.value = input.getAttribute('data-original-value') || '1';
+          })
+          .finally(() => {
+            // 重新启用输入框
+            input.disabled = false;
+          });
+      }
+
+      function updateQuantity (button, change) {
+        const input = button.parentElement.querySelector('input');
+        // 保存原始值
+        if (!input.hasAttribute('data-original-value')) {
+          input.setAttribute('data-original-value', input.value);
+        }
+        const newValue = parseInt(input.value) + change;
+        if (newValue > 0) {
+          input.value = newValue;
+          quantityChanged(input);
+        }
+      }
+
+      function updateCartTotal () {
+        let total = 0;
+        document.querySelectorAll('tbody tr').forEach(row => {
+          const priceEl = row.querySelector('.item-price');
+          const qtyEl = row.querySelector('.quantity-input');
+          const subtotalEl = row.querySelector('.item-subtotal');
+          if (priceEl && qtyEl && subtotalEl) {
+            const price = parseFloat(priceEl.textContent);
+            const qty = parseInt(qtyEl.value);
+            const subtotal = price * qty;
+            subtotalEl.textContent = subtotal.toFixed(2);
+            total += subtotal;
+          }
+        });
+        document.querySelector('.total-value').textContent = total.toFixed(2);
+      }
+
+      // 在页面加载和每次数量变动后都调用一次，确保总价准确
+      document.addEventListener('DOMContentLoaded', updateCartTotal);
+
+      function removeItem (itemId) {
+        if (confirm('确定要删除这个商品吗？')) {
+          fetch(`/cart/remove/${itemId}`, {
+            method: 'POST'
+          })
+            .then(response => {
+              if (response.ok) {
+                location.reload();
+              }
+            });
+        }
+      }
+
+      function clearCart () {
+        if (confirm('确定要清空购物车吗？')) {
+          fetch('/cart/clear', {
+            method: 'POST'
+          })
+            .then(response => {
+              if (response.ok) {
+                location.reload();
+              }
+            });
+        }
+      }
+
+      function showToast (type, message) {
+        const toastContainer = document.querySelector('.toast-container') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+
+        toast.innerHTML = `
+          <div class="toast-header">
+            <strong class="me-auto">${type === 'success' ? '成功' : '错误'}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+          <div class="toast-body">
+            ${message}
+          </div>
+        `;
+
+        toastContainer.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        toast.addEventListener('hidden.bs.toast', () => {
+          toast.remove();
+        });
+      }
+
+      function createToastContainer () {
+        const container = document.createElement('div');
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(container);
+        return container;
+      }
+    </script>
+  </div>
+</body>
+
+</html>

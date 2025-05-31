@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/main}">
+
+<head>
+  <title>店铺设置</title>
+  <style>
+    .avatar-upload {
+      position: relative;
+      max-width: 200px;
+      margin: 0 auto;
+    }
+
+    .avatar-preview {
+      width: 200px;
+      height: 200px;
+      position: relative;
+      border: 6px solid #f8f9fa;
+      box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      overflow: hidden;
+    }
+
+    .avatar-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .avatar-edit {
+      position: absolute;
+      right: 12px;
+      z-index: 1;
+      bottom: 10px;
+    }
+
+    .avatar-edit input {
+      display: none;
+    }
+
+    .avatar-edit label {
+      display: inline-block;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 0;
+      border-radius: 100%;
+      background: #ffffff;
+      border: 1px solid transparent;
+      box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+      font-weight: normal;
+      transition: all 0.2s ease-in-out;
+      line-height: 34px;
+      text-align: center;
+    }
+
+    .avatar-edit label:hover {
+      background: #f1f1f1;
+      border-color: #d6d6d6;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container-fluid">
+      <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-2">
+          <div class="list-group">
+            <a href="/seller/dashboard" class="list-group-item list-group-item-action">
+              <i class="bi bi-speedometer2"></i> 商家首页
+            </a>
+            <a href="/seller/products" class="list-group-item list-group-item-action">
+              <i class="bi bi-box"></i> 商品管理
+            </a>
+            <a href="/seller/orders" class="list-group-item list-group-item-action">
+              <i class="bi bi-cart"></i> 订单管理
+            </a>
+            <a href="/seller/orders/pending" class="list-group-item list-group-item-action">
+              <i class="bi bi-clock"></i> 待处理订单
+            </a>
+            <a href="/seller/orders/pending-returns" class="list-group-item list-group-item-action">
+              <i class="bi bi-arrow-return-left"></i> 退货管理
+            </a>
+            <a href="/seller/reviews" class="list-group-item list-group-item-action">
+              <i class="bi bi-star"></i> 商品评价
+            </a>
+            <a href="/seller/profile" class="list-group-item list-group-item-action active">
+              <i class="bi bi-gear"></i> 店铺设置
+            </a>
+          </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-10">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>店铺设置</h2>
+          </div>
+
+          <!-- Flash Messages -->
+          <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+
+          <div class="row">
+            <!-- 店铺信息 -->
+            <div class="col-md-8">
+              <div class="card mb-4">
+                <div class="card-body">
+                  <h5 class="card-title mb-4">基本信息</h5>
+                  <form th:action="@{/seller/profile/update}" method="post" th:object="${seller}">
+                    <div class="mb-3">
+                      <label for="storeName" class="form-label">店铺名称 <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="storeName" th:field="*{storeName}" required
+                        maxlength="50">
+                      <div class="invalid-feedback" th:if="${#fields.hasErrors('storeName')}" th:errors="*{storeName}">
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="description" class="form-label">店铺简介</label>
+                      <textarea class="form-control" id="description" th:field="*{storeDescription}" rows="3"
+                        maxlength="500"></textarea>
+                      <div class="invalid-feedback" th:if="${#fields.hasErrors('storeDescription')}"
+                        th:errors="*{storeDescription}"></div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="phone" class="form-label">联系电话 <span class="text-danger">*</span></label>
+                      <input type="tel" class="form-control" id="phone" th:field="*{phone}" required maxlength="20">
+                      <div class="invalid-feedback" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="email" class="form-label">联系邮箱 <span class="text-danger">*</span></label>
+                      <input type="email" class="form-control" id="email" th:field="*{email}" required maxlength="100">
+                      <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="address" class="form-label">店铺地址</label>
+                      <textarea class="form-control" id="address" th:field="*{address}" rows="2"
+                        maxlength="200"></textarea>
+                      <div class="invalid-feedback" th:if="${#fields.hasErrors('address')}" th:errors="*{address}">
+                      </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                      <i class="bi bi-save"></i> 保存修改
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- 店铺状态 -->
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title mb-4">店铺状态</h5>
+                  <div class="mb-3">
+                    <label class="form-label">当前状态</label>
+                    <div>
+                      <span th:switch="${seller.status}" class="badge">
+                        <span th:case="${T(com.example.eshop.model.UserStatus).ACTIVE}"
+                          class="badge bg-success">正常营业</span>
+                        <span th:case="${T(com.example.eshop.model.UserStatus).PENDING}"
+                          class="badge bg-warning text-dark">待审核</span>
+                        <span th:case="${T(com.example.eshop.model.UserStatus).INACTIVE}"
+                          class="badge bg-danger">已暂停</span>
+                        <span th:case="*" class="badge bg-secondary" th:text="${seller.status}">其他</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label">入驻时间</label>
+                    <div>
+                      <span th:text="${#temporals.format(seller.createdAt, 'yyyy-MM-dd')}"></span>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label">最近更新</label>
+                    <div>
+                      <span th:text="${#temporals.format(seller.updatedAt, 'yyyy-MM-dd HH:mm')}"></span>
+                    </div>
+                  </div>
+
+                  <form th:if="${seller.status.name() == 'ACTIVE'}" th:action="@{/seller/profile/suspend}" method="post"
+                    onsubmit="return confirm('确定要暂停营业吗？暂停期间将无法接收新订单。');">
+                    <button type="submit" class="btn btn-warning">
+                      <i class="bi bi-pause-fill"></i> 暂停营业
+                    </button>
+                  </form>
+
+                  <form th:if="${seller.status.name() == 'INACTIVE'}" th:action="@{/seller/profile/resume}"
+                    method="post">
+                    <button type="submit" class="btn btn-success">
+                      <i class="bi bi-play-fill"></i> 恢复营业
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 页面特定的脚本 -->
+  <th:block layout:fragment="scripts">
+    <script>
+      // Logo预览和自动上传
+      document.getElementById('logoInput').addEventListener('change', function (e) {
+        if (e.target.files && e.target.files[0]) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            document.getElementById('logoPreview').src = e.target.result;
+          }
+          reader.readAsDataURL(e.target.files[0]);
+
+          // 自动提交表单
+          document.getElementById('logoForm').submit();
+        }
+      });
+    </script>
+  </th:block>
+</body>
+
+</html>

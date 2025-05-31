@@ -1,0 +1,47 @@
+<div class="order-status mb-4">
+  <h5>订单状态</h5>
+  <div class="d-flex align-items-center">
+    <span class="badge" th:classappend="${order.status == T(com.example.eshop.model.OrderStatus).PENDING_PAYMENT ? 'bg-warning text-dark' : 
+                                        order.status == T(com.example.eshop.model.OrderStatus).PENDING_DELIVERY ? 'bg-info' : 
+                                        order.status == T(com.example.eshop.model.OrderStatus).IN_TRANSIT ? 'bg-primary' : 
+                                        order.status == T(com.example.eshop.model.OrderStatus).DELIVERED ? 'bg-success' : 
+                                        order.status == T(com.example.eshop.model.OrderStatus).COMPLETED ? 'bg-success' : 
+                                        order.status == T(com.example.eshop.model.OrderStatus).CANCELED ? 'bg-danger' : 
+                                        order.status == T(com.example.eshop.model.OrderStatus).RETURN_REQUESTED ? 'bg-warning' : 
+                                        order.status == T(com.example.eshop.model.OrderStatus).RETURN_APPROVED ? 'bg-info' : 
+                                        order.status == T(com.example.eshop.model.OrderStatus).RETURN_REJECTED ? 'bg-danger' : 
+                                        order.status == T(com.example.eshop.model.OrderStatus).RETURN_COMPLETED ? 'bg-secondary' : 
+                                        'bg-secondary'}" th:text="${order.status == T(com.example.eshop.model.OrderStatus).PENDING_PAYMENT ? '待付款' : 
+                order.status == T(com.example.eshop.model.OrderStatus).PENDING_DELIVERY ? '待发货' : 
+                order.status == T(com.example.eshop.model.OrderStatus).IN_TRANSIT ? '运输中' : 
+                order.status == T(com.example.eshop.model.OrderStatus).DELIVERED ? '已送达' : 
+                order.status == T(com.example.eshop.model.OrderStatus).COMPLETED ? '已完成' : 
+                order.status == T(com.example.eshop.model.OrderStatus).CANCELED ? '已取消' : 
+                order.status == T(com.example.eshop.model.OrderStatus).RETURN_REQUESTED ? '申请退货' : 
+                order.status == T(com.example.eshop.model.OrderStatus).RETURN_APPROVED ? '退货通过' : 
+                order.status == T(com.example.eshop.model.OrderStatus).RETURN_REJECTED ? '退货拒绝' : 
+                order.status == T(com.example.eshop.model.OrderStatus).RETURN_COMPLETED ? '退货完成' : 
+                order.status}">
+      状态
+    </span>
+    <span class="ms-3" th:text="${#temporals.format(order.updatedAt, 'yyyy-MM-dd HH:mm:ss')}">更新时间</span>
+  </div>
+</div>
+
+<!-- 操作按钮 -->
+<div class="order-actions mb-4">
+  <div class="btn-group">
+    <button th:if="${order.status == T(com.example.eshop.model.OrderStatus).PENDING_DELIVERY}" class="btn btn-success"
+      data-bs-toggle="modal" data-bs-target="#shipModal">
+      <i class="bi bi-truck"></i> 发货
+    </button>
+    <button th:if="${order.status == T(com.example.eshop.model.OrderStatus).IN_TRANSIT}" class="btn btn-info"
+      data-bs-toggle="modal" data-bs-target="#deliverModal">
+      <i class="bi bi-check2-circle"></i> 确认送达
+    </button>
+    <button th:if="${order.status == T(com.example.eshop.model.OrderStatus).COMPLETED && order.returnStatus == null}"
+      class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#returnModal">
+      <i class="bi bi-arrow-return-left"></i> 处理退货
+    </button>
+  </div>
+</div>

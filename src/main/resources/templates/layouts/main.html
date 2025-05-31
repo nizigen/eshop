@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title layout:title-pattern="$CONTENT_TITLE - 爱淘">爱淘</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link th:href="@{/css/style.css}" rel="stylesheet">
+
+  <!-- Additional styles -->
+  <th:block layout:fragment="styles"></th:block>
+</head>
+
+<body>
+  <!-- 导航栏 -->
+  <div th:replace="~{fragments/header :: header}"></div>
+
+  <!-- 主要内容 -->
+  <main>
+    <div layout:fragment="content">
+      <!-- 页面具体内容将被插入这里 -->
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="footer mt-auto py-3 bg-light">
+    <div class="container text-center">
+      <span class="text-muted">© 2025 爱淘平台. All rights reserved.</span>
+    </div>
+  </footer>
+
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Additional scripts -->
+  <th:block layout:fragment="scripts"></th:block>
+</body>
+
+</html>

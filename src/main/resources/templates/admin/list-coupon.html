@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title>优惠券管理</title>
+  <style>
+    .admin-sidebar {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 5px;
+    }
+
+    .admin-sidebar .nav-link {
+      color: #333;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+
+    .admin-sidebar .nav-link:hover {
+      background-color: #e9ecef;
+    }
+
+    .admin-sidebar .nav-link.active {
+      background-color: #0d6efd;
+      color: white;
+    }
+
+    .admin-sidebar .nav-link i {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container-fluid py-4">
+      <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-2">
+          <div class="admin-sidebar">
+            <h5 class="mb-3">管理菜单</h5>
+            <div class="nav flex-column">
+              <a href="/admin/dashboard" class="nav-link">
+                <i class="bi bi-speedometer2"></i> 仪表盘
+              </a>
+              <a href="/admin/users" class="nav-link">
+                <i class="bi bi-people"></i> 用户管理
+              </a>
+              <a href="/admin/users/pending" class="nav-link">
+                <i class="bi bi-person-plus"></i> 待审核用户
+              </a>
+              <a href="/admin/sellers" class="nav-link">
+                <i class="bi bi-shop"></i> 商家管理
+              </a>
+              <a href="/admin/products" class="nav-link">
+                <i class="bi bi-box"></i> 商品管理
+              </a>
+              <a href="/admin/products/pending" class="nav-link">
+                <i class="bi bi-box-seam"></i> 待审核商品
+              </a>
+              <a href="/admin/orders" class="nav-link">
+                <i class="bi bi-cart"></i> 订单管理
+              </a>
+              <a href="/admin/coupons" class="nav-link active">
+                <i class="bi bi-ticket-perforated"></i> 优惠券管理
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-10">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>优惠券管理</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCouponModal">
+              <i class="bi bi-plus"></i> 新增优惠券
+            </button>
+          </div>
+
+          <!-- 优惠券列表 -->
+          <div class="card">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>名称</th>
+                      <th>类型</th>
+                      <th>优惠值</th>
+                      <th>最低消费</th>
+                      <th>剩余数量</th>
+                      <th>有效期</th>
+                      <th>状态</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="coupon : ${coupons}">
+                      <td th:text="${coupon.id}"></td>
+                      <td th:text="${coupon.name}"></td>
+                      <td th:text="${coupon.type == 'PERCENTAGE' ? '百分比折扣' : '固定金额'}"></td>
+                      <td>
+                        <span th:if="${coupon.type == 'PERCENTAGE'}" th:text="${coupon.value + '%'}"></span>
+                        <span th:if="${coupon.type == 'FIXED'}" th:text="${'¥' + coupon.value}"></span>
+                      </td>
+                      <td th:text="${'¥' + coupon.minPurchase}"></td>
+                      <td th:text="${coupon.remaining + '/' + coupon.quantity}"></td>
+                      <td>
+                        <span th:text="${#temporals.format(coupon.startTime, 'yyyy-MM-dd')}"></span>
+                        至
+                        <span th:text="${#temporals.format(coupon.endTime, 'yyyy-MM-dd')}"></span>
+                      </td>
+                      <td>
+                        <span class="badge"
+                          th:classappend="${coupon.endTime.isBefore(#temporals.createNow()) ? 'bg-danger' : 'bg-success'}"
+                          th:text="${coupon.endTime.isBefore(#temporals.createNow()) ? '已过期' : '生效中'}">
+                        </span>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-outline-primary me-1"
+                          th:onclick="'editCoupon(' + ${coupon.id} + ')'">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" th:onclick="'deleteCoupon(' + ${coupon.id} + ')'">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新增/编辑优惠券模态框 -->
+    <div class="modal fade" id="addCouponModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalTitle">新增优惠券</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="couponForm">
+              <input type="hidden" id="couponId">
+              <div class="mb-3">
+                <label for="name" class="form-label">优惠券名称</label>
+                <input type="text" class="form-control" id="name" required>
+              </div>
+              <div class="mb-3">
+                <label for="type" class="form-label">优惠类型</label>
+                <select class="form-select" id="type" required>
+                  <option value="FIXED">固定金额</option>
+                  <option value="PERCENTAGE">百分比折扣</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="value" class="form-label">优惠值</label>
+                <input type="number" class="form-control" id="value" required>
+                <div class="form-text">固定金额时单位为元，折扣率时单位为%</div>
+              </div>
+              <div class="mb-3">
+                <label for="minPurchase" class="form-label">最低消费金额</label>
+                <input type="number" class="form-control" id="minPurchase" required>
+              </div>
+              <div class="mb-3">
+                <label for="quantity" class="form-label">发放数量</label>
+                <input type="number" class="form-control" id="quantity" required>
+              </div>
+              <div class="mb-3">
+                <label for="startTime" class="form-label">生效时间</label>
+                <input type="date" class="form-control" id="startTime" required min="">
+              </div>
+              <div class="mb-3">
+                <label for="endTime" class="form-label">失效时间</label>
+                <input type="date" class="form-control" id="endTime" required min="">
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary" onclick="saveCoupon()">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <th:block layout:fragment="scripts">
+    <script th:inline="javascript">
+      let couponModal;
+
+      document.addEventListener('DOMContentLoaded', function () {
+        couponModal = new bootstrap.Modal(document.getElementById('addCouponModal'));
+
+        // 设置日期输入框的最小值为明天
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        document.getElementById('startTime').min = tomorrowStr;
+        document.getElementById('endTime').min = tomorrowStr;
+
+        // 添加日期验证
+        document.getElementById('startTime').addEventListener('change', validateDates);
+        document.getElementById('endTime').addEventListener('change', validateDates);
+      });
+
+      function validateDates () {
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+
+        if (startTime && endTime) {
+          if (startTime > endTime) {
+            showToast('error', '生效时间不能晚于失效时间');
+            document.getElementById('endTime').value = '';
+          }
+        }
+      }
+
+      function editCoupon (id) {
+        fetch(`/admin/coupons/${id}/edit`)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
+          .then(data => {
+            // 兼容后端返回结构
+            const coupon = data.data || data;
+            document.getElementById('couponId').value = coupon.id;
+            document.getElementById('name').value = coupon.name;
+            document.getElementById('type').value = coupon.type;
+            document.getElementById('value').value = coupon.value;
+            document.getElementById('minPurchase').value = coupon.minPurchase;
+            document.getElementById('quantity').value = coupon.quantity;
+            document.getElementById('startTime').value = coupon.startTime.substring(0, 10);
+            document.getElementById('endTime').value = coupon.endTime.substring(0, 10);
+
+            document.getElementById('modalTitle').textContent = '编辑优惠券';
+            couponModal.show();
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showToast('error', '加载优惠券数据失败');
+          });
+      }
+
+      function saveCoupon () {
+        const couponId = document.getElementById('couponId').value;
+        const couponData = {
+          name: document.getElementById('name').value,
+          type: document.getElementById('type').value,
+          value: document.getElementById('value').value,
+          minPurchase: document.getElementById('minPurchase').value,
+          quantity: document.getElementById('quantity').value,
+          startTime: document.getElementById('startTime').value + 'T00:00:00',
+          endTime: document.getElementById('endTime').value + 'T23:59:59'
+        };
+        let url, method;
+        if (couponId) {
+          url = `/api/coupons/${couponId}`;
+          method = 'PUT';
+        } else {
+          url = '/api/coupons';
+          method = 'POST';
+        }
+        fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(couponData)
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success || data.id) {
+              location.reload();
+            } else {
+              showToast('error', data.message || '保存失败');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showToast('error', '保存失败，请重试');
+          });
+      }
+
+      function deleteCoupon (couponId) {
+        if (!confirm('确定要删除这个优惠券吗？')) {
+          return;
+        }
+
+        fetch(`/api/coupons/${couponId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              location.reload();
+            } else {
+              showToast('error', data.message || '删除优惠券失败');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showToast('error', '删除优惠券失败，请稍后重试');
+          });
+      }
+
+      function toggleCouponStatus (couponId) {
+        if (!confirm('确定要更改这个优惠券的状态吗？')) {
+          return;
+        }
+
+        fetch(`/api/admin/coupons/${couponId}/toggle-status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              location.reload();
+            } else {
+              alert(data.message || '更改优惠券状态失败');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('更改优惠券状态失败，请稍后重试');
+          });
+      }
+
+      function showToast (type, message) {
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '1050';
+
+        const toastHtml = `
+          <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0">
+            <div class="d-flex">
+              <div class="toast-body">
+                ${message}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+          </div>
+        `;
+
+        toastContainer.innerHTML = toastHtml;
+        document.body.appendChild(toastContainer);
+
+        const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
+        toast.show();
+
+        // 自动移除 toast 元素
+        toastContainer.querySelector('.toast').addEventListener('hidden.bs.toast', () => {
+          document.body.removeChild(toastContainer);
+        });
+      }
+    </script>
+  </th:block>
+</body>
+
+</html>

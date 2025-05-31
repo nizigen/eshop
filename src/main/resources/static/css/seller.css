@@ -1,0 +1,215 @@
+/* Seller Dashboard Theme */
+:root {
+  --seller-primary: #2470dc;
+  --seller-secondary: #6c757d;
+  --seller-success: #198754;
+  --seller-danger: #dc3545;
+  --seller-warning: #ffc107;
+  --seller-info: #0dcaf0;
+  --seller-sidebar-width: 220px;
+  --seller-navbar-height: 56px;
+  --seller-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Layout */
+body {
+  font-family: var(--seller-font-family);
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  background-color: #f8f9fa;
+}
+
+.main-content {
+  flex: 1;
+  padding-top: var(--seller-navbar-height);
+}
+
+/* Navbar */
+.navbar-seller {
+  background-color: #343a40 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+}
+
+.navbar-brand {
+  padding: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: white !important;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: var(--seller-navbar-height);
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  padding: 48px 0 0;
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+  width: var(--seller-sidebar-width);
+  background-color: white;
+}
+
+.sidebar .nav-link {
+  padding: 0.7rem 1rem;
+  font-weight: 500;
+  color: var(--seller-secondary);
+  transition: all 0.3s ease;
+}
+
+.sidebar .nav-link:hover {
+  color: var(--seller-primary);
+  background-color: rgba(36, 112, 220, 0.05);
+}
+
+.sidebar .nav-link.active {
+  color: var(--seller-primary);
+  background-color: rgba(36, 112, 220, 0.1);
+}
+
+.sidebar .nav-link .bi {
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+.sidebar-heading {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--seller-secondary);
+}
+
+/* Main Content Area */
+.main-area {
+  margin-left: var(--seller-sidebar-width);
+  padding: 2rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Cards */
+.card {
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.card-header {
+  background-color: white;
+  border-bottom: 1px solid rgba(0, 0, 0, .125);
+  padding: 1rem;
+}
+
+/* Tables */
+.table-seller {
+  --bs-table-striped-bg: rgba(0, 0, 0, .02);
+}
+
+.table-seller thead th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+}
+
+/* Forms */
+.form-control:focus {
+  border-color: var(--seller-primary);
+  box-shadow: 0 0 0 0.25rem rgba(36, 112, 220, .25);
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+/* Buttons */
+.btn-seller-primary {
+  background-color: var(--seller-primary);
+  border-color: var(--seller-primary);
+  color: white;
+}
+
+.btn-seller-primary:hover {
+  background-color: #1b5bb9;
+  border-color: #1b5bb9;
+  color: white;
+}
+
+/* Stats Cards */
+.stats-card {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background-color: white;
+  margin-bottom: 1rem;
+}
+
+.stats-card-title {
+  color: var(--seller-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.stats-card-value {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--seller-primary);
+}
+
+/* Alerts */
+.alert {
+  border: none;
+  border-radius: 0.5rem;
+}
+
+.alert-success {
+  background-color: rgba(25, 135, 84, 0.1);
+  color: var(--seller-success);
+}
+
+.alert-danger {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--seller-danger);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    position: static;
+    padding-top: 0;
+  }
+
+  .main-area {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .navbar-brand {
+    font-size: 1rem;
+  }
+}
+
+/* Animations */
+.fade-enter {
+  opacity: 0;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 200ms ease-in;
+}
+
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 200ms ease-in;
+}

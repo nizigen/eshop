@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:fragment="paginationStyle">
+  <style>
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 20px 0;
+    }
+
+    .pagination .page-item {
+      margin: 0 2px;
+    }
+
+    .pagination .page-link {
+      padding: 8px 16px;
+      border-radius: 4px;
+      color: #007bff;
+      background-color: #fff;
+      border: 1px solid #dee2e6;
+      transition: all 0.2s;
+    }
+
+    .pagination .page-link:hover {
+      background-color: #e9ecef;
+      border-color: #dee2e6;
+      color: #0056b3;
+    }
+
+    .pagination .active .page-link {
+      background-color: #007bff;
+      border-color: #007bff;
+      color: #fff;
+    }
+
+    .pagination .disabled .page-link {
+      color: #6c757d;
+      pointer-events: none;
+      background-color: #fff;
+      border-color: #dee2e6;
+    }
+  </style>
+</head>
+
+<body>
+  <div th:fragment="pagination(page, baseUrl)" class="pagination-container">
+    <div th:if="${page.totalPages > 0}" class="pagination">
+      <!-- 首页 -->
+      <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+        <a class="page-link" th:href="@{${baseUrl}(page=0)}" aria-label="First">
+          <span aria-hidden="true">&laquo;&laquo;</span>
+        </a>
+      </li>
+
+      <!-- 上一页 -->
+      <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+        <a class="page-link" th:href="@{${baseUrl}(page=${page.number - 1})}" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+
+      <!-- 页码 -->
+      <li class="page-item" th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+        th:if="${i >= page.number - 2 and i <= page.number + 2}" th:classappend="${i == page.number} ? 'active'">
+        <a class="page-link" th:href="@{${baseUrl}(page=${i})}" th:text="${i + 1}">1</a>
+      </li>
+
+      <!-- 下一页 -->
+      <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+        <a class="page-link" th:href="@{${baseUrl}(page=${page.number + 1})}" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+
+      <!-- 末页 -->
+      <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+        <a class="page-link" th:href="@{${baseUrl}(page=${page.totalPages - 1})}" aria-label="Last">
+          <span aria-hidden="true">&raquo;&raquo;</span>
+        </a>
+      </li>
+    </div>
+
+    <!-- 分页信息 -->
+    <div th:if="${page.totalElements > 0}" class="pagination-info text-center mt-2">
+      <small class="text-muted">
+        显示 [[${page.number * page.size + 1}]] - [[${page.last ? page.totalElements : (page.number + 1) * page.size}]]
+        条，共
+        [[${page.totalElements}]] 条
+      </small>
+    </div>
+  </div>
+
+  <th:block th:fragment="paginationScript">
+    <script>
+      function goToPage (pageNumber) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', pageNumber);
+        window.location.href = url.toString();
+      }
+    </script>
+  </th:block>
+</body>
+
+</html>

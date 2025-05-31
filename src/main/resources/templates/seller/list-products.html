@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layouts/main}">
+
+<head>
+  <title>商品管理</title>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container-fluid">
+      <div class="row">
+        <!-- 左侧导航 -->
+        <div class="col-md-2">
+          <div class="list-group">
+            <a href="/seller/dashboard" class="list-group-item list-group-item-action">
+              <i class="bi bi-speedometer2"></i> 商家首页
+            </a>
+            <a href="/seller/products" class="list-group-item list-group-item-action active">
+              <i class="bi bi-box"></i> 商品管理
+            </a>
+            <a href="/seller/orders" class="list-group-item list-group-item-action">
+              <i class="bi bi-cart"></i> 订单管理
+            </a>
+            <a href="/seller/orders/pending" class="list-group-item list-group-item-action">
+              <i class="bi bi-clock"></i> 待处理订单
+            </a>
+            <a href="/seller/orders/pending-returns" class="list-group-item list-group-item-action">
+              <i class="bi bi-arrow-return-left"></i> 退货管理
+            </a>
+            <a href="/seller/reviews" class="list-group-item list-group-item-action">
+              <i class="bi bi-star"></i> 商品评价
+            </a>
+            <a href="/seller/profile" class="list-group-item list-group-item-action">
+              <i class="bi bi-gear"></i> 店铺设置
+            </a>
+          </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="col-md-10">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>商品管理</h2>
+            <a href="/seller/products/new" class="btn btn-primary">
+              <i class="bi bi-plus-lg"></i> 发布新商品
+            </a>
+          </div>
+
+          <!-- Flash Messages -->
+          <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>商品图片</th>
+                      <th>商品名称</th>
+                      <th>价格</th>
+                      <th>库存</th>
+                      <th>状态</th>
+                      <th>创建时间</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:if="${products.isEmpty()}">
+                      <td colspan="8" class="text-center">暂无商品数据</td>
+                    </tr>
+                    <tr th:each="product : ${products}">
+                      <td th:text="${product.id}"></td>
+                      <td>
+                        <img th:if="${not #lists.isEmpty(product.images)}"
+                          th:src="${product.getPrimaryImage().imageUrl}" alt="商品图片"
+                          style="width: 50px; height: 50px; object-fit: cover;">
+                        <span th:if="${#lists.isEmpty(product.images)}" class="text-muted">无图片</span>
+                      </td>
+                      <td th:text="${product.name}"></td>
+                      <td th:text="${#numbers.formatDecimal(product.price, 1, 2)}"></td>
+                      <td th:text="${product.quantity}"></td>
+                      <td>
+                        <span th:switch="${product.status}">
+                          <span th:case="${T(com.example.eshop.model.ProductStatus).ACTIVE}"
+                            class="badge bg-success">在售</span>
+                          <span th:case="${T(com.example.eshop.model.ProductStatus).PENDING_APPROVAL}"
+                            class="badge bg-warning text-dark">待审核</span>
+                          <span th:case="${T(com.example.eshop.model.ProductStatus).REJECTED}"
+                            class="badge bg-danger">已拒绝</span>
+                          <span th:case="${T(com.example.eshop.model.ProductStatus).SOLD_OUT}"
+                            class="badge bg-secondary">已售罄</span>
+                          <span th:case="${T(com.example.eshop.model.ProductStatus).UNLISTED}"
+                            class="badge bg-dark">已下架</span>
+                          <span th:case="*" class="badge bg-light text-dark" th:text="${product.status}"></span>
+                        </span>
+                      </td>
+                      <td th:text="${#temporals.format(product.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                      <td>
+                        <div class="btn-group">
+                          <a th:href="@{/products/{id}(id=${product.id})}" class="btn btn-info btn-sm">查看</a>
+                          <a th:href="@{/seller/products/{id}/edit(id=${product.id})}"
+                            class="btn btn-primary btn-sm">编辑</a>
+                          <form th:action="@{/seller/products/{id}/delete(id=${product.id})}" method="post"
+                            style="display: inline;" onsubmit="return confirm('确定要删除这个商品吗？此操作无法撤销。');">
+                            <button type="submit" class="btn btn-danger btn-sm">删除</button>
+                          </form>
+                          <form
+                            th:if="${product.status.name() == 'ACTIVE' or product.status.name() == 'PENDING_APPROVAL'}"
+                            th:action="@{/seller/products/unlist/{id}(id=${product.id})}" method="post"
+                            style="display: inline;">
+                            <button type="submit" class="btn btn-warning btn-sm">下架</button>
+                          </form>
+                          <form th:if="${product.status.name() == 'UNLISTED'}"
+                            th:action="@{/seller/products/relist/{id}(id=${product.id})}" method="post"
+                            style="display: inline;">
+                            <button type="submit" class="btn btn-success btn-sm">上架</button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

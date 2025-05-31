@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Error</title>
+  <style>
+    .error-template {
+      padding: 40px 15px;
+      text-align: center;
+    }
+
+    .error-actions {
+      margin-top: 15px;
+      margin-bottom: 15px;
+    }
+
+    .error-actions .btn {
+      margin-right: 10px;
+    }
+
+    .error-details {
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+
+    .error-icon {
+      font-size: 64px;
+      color: #6c757d;
+      margin-bottom: 20px;
+    }
+
+    .error-code {
+      font-size: 24px;
+      color: #6c757d;
+      margin-bottom: 10px;
+    }
+
+    .error-message {
+      font-size: 18px;
+      color: #343a40;
+      margin-bottom: 20px;
+    }
+
+    .error-timestamp {
+      font-size: 14px;
+      color: #6c757d;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="error-template">
+            <div class="error-icon">
+              <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <h1>Oops!</h1>
+            <div class="error-code" th:text="${status} ?: 'Error'">Error</div>
+            <div class="error-message" th:text="${message} ?: 'Something went wrong'">Something went wrong</div>
+
+            <!-- 消息提示 -->
+            <div th:replace="~{fragments/message :: message}"></div>
+
+            <div class="error-actions">
+              <a href="/" class="btn btn-primary">
+                <i class="fas fa-home"></i> Take Me Home
+              </a>
+              <button onclick="window.history.back()" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Go Back
+              </button>
+              <a href="/contact" class="btn btn-outline-secondary">
+                <i class="fas fa-envelope"></i> Contact Support
+              </a>
+            </div>
+            <div class="error-timestamp" th:if="${timestamp}">
+              <small>Timestamp: <span th:text="${#dates.format(timestamp, 'yyyy-MM-dd HH:mm:ss')}">2024-01-01
+                  00:00:00</span></small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

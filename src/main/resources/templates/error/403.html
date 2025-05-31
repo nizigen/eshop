@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+  layout:decorate="~{layouts/main}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head>
+  <title>403 - 访问被拒绝</title>
+  <style>
+    .error-container {
+      text-align: center;
+      padding: 40px 0;
+    }
+
+    .error-code {
+      font-size: 72px;
+      font-weight: bold;
+      color: #dc3545;
+      margin-bottom: 20px;
+    }
+
+    .error-message {
+      font-size: 24px;
+      color: #6c757d;
+      margin-bottom: 30px;
+    }
+
+    .error-details {
+      font-size: 16px;
+      color: #6c757d;
+      margin-bottom: 30px;
+    }
+
+    .back-button {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .back-button:hover {
+      background-color: #0056b3;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <div layout:fragment="content">
+    <div class="container">
+      <div class="error-container">
+        <div class="error-code">403</div>
+        <div class="error-message">访问被拒绝</div>
+        <div class="error-details">
+          <p>抱歉，您没有权限访问此页面或执行此操作。</p>
+          <p th:if="${error != null}" th:text="${error}">错误详情</p>
+          <p th:if="${message != null}" th:text="${message}">错误信息</p>
+        </div>
+        <a href="/" class="back-button">返回首页</a>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

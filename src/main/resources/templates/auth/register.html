@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layouts/main}">
+
+<head>
+  <title>选择注册类型</title>
+  <style>
+    .registration-choice {
+      max-width: 900px;
+      margin: 3rem auto;
+    }
+
+    .choice-card {
+      height: 100%;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+      border-radius: 1rem;
+      border: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    .choice-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .choice-icon {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+      transition: transform 0.3s ease;
+    }
+
+    .choice-card:hover .choice-icon {
+      transform: scale(1.1);
+    }
+
+    .choice-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .choice-description {
+      color: #6c757d;
+      margin-bottom: 1.5rem;
+    }
+
+    .choice-features {
+      text-align: left;
+      margin-bottom: 2rem;
+    }
+
+    .choice-features .list-unstyled li {
+      padding: 0.5rem 0;
+    }
+
+    .choice-features .text-success {
+      color: #28a745 !important;
+    }
+
+    .page-heading {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .page-heading h2 {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .page-heading p {
+      color: #6c757d;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .btn-primary,
+    .btn-success {
+      border-radius: 0.5rem;
+      padding: 0.6rem 1.5rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-primary:hover,
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+
+<body>
+  <section layout:fragment="content">
+    <div class="container registration-choice">
+      <div class="page-heading">
+        <h2 class="mb-3">选择注册类型</h2>
+        <p class="text-muted mb-4">请选择您要注册的账号类型，我们将为您提供不同的功能和服务</p>
+      </div>
+
+      <div class="row g-4">
+        <!-- 买家注册选项 -->
+        <div class="col-md-6">
+          <div class="card choice-card h-100" onclick="window.location.href='/auth/register-customer'">
+            <div class="card-body text-center p-5">
+              <div class="choice-icon text-primary">
+                <i class="fas fa-shopping-cart"></i>
+              </div>
+              <h3 class="choice-title">买家账号</h3>
+              <p class="choice-description">
+                注册成为买家，开始您的购物之旅
+              </p>
+              <div class="choice-features">
+                <ul class="list-unstyled">
+                  <li><i class="fas fa-check text-success me-2"></i>浏览和购买商品</li>
+                  <li><i class="fas fa-check text-success me-2"></i>收藏喜欢的商品</li>
+                  <li><i class="fas fa-check text-success me-2"></i>评价已购商品</li>
+                  <li><i class="fas fa-check text-success me-2"></i>管理收货地址</li>
+                </ul>
+              </div>
+              <a href="/auth/register-customer" class="btn btn-primary btn-lg">
+                <i class="fas fa-user-plus me-2"></i>注册买家账号
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卖家注册选项 -->
+        <div class="col-md-6">
+          <div class="card choice-card h-100" onclick="window.location.href='/auth/register-seller'">
+            <div class="card-body text-center p-5">
+              <div class="choice-icon text-success">
+                <i class="fas fa-store"></i>
+              </div>
+              <h3 class="choice-title">卖家账号</h3>
+              <p class="choice-description">
+                注册成为卖家，开启您的经营之路
+              </p>
+              <div class="choice-features">
+                <ul class="list-unstyled">
+                  <li><i class="fas fa-check text-success me-2"></i>开设自己的店铺</li>
+                  <li><i class="fas fa-check text-success me-2"></i>管理商品上架</li>
+                  <li><i class="fas fa-check text-success me-2"></i>处理订单发货</li>
+                  <li><i class="fas fa-check text-success me-2"></i>查看销售统计</li>
+                </ul>
+              </div>
+              <a href="/auth/register-seller" class="btn btn-success btn-lg">
+                <i class="fas fa-store-alt me-2"></i>注册卖家账号
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 已有账号提示 -->
+      <div class="text-center mt-5">
+        <p class="text-muted">
+          已有账号？
+          <a href="/auth/login" class="text-decoration-none fw-bold">立即登录</a>
+        </p>
+      </div>
+    </div>
+  </section>
+</body>
+
+</html>

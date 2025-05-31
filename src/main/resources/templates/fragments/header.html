@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+  <meta charset="UTF-8">
+</head>
+
+<body>
+  <header th:fragment="header">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand" th:href="@{/}">爱淘</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <!-- 左侧导航 -->
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/}">首页</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/cart}">
+                <i class="bi bi-cart"></i> 购物车
+                <span class="badge bg-danger cart-count"
+                  th:if="${session.cartItemCount != null && session.cartItemCount > 0}"
+                  th:text="${session.cartItemCount}"></span>
+              </a>
+            </li>
+          </ul>
+
+          <!-- 右侧导航 -->
+          <ul class="navbar-nav">
+            <!-- 已登录用户 -->
+            <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                <i class="bi bi-person-circle"></i>
+                <span th:text="${#authentication.principal.username}">用户名</span>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <!-- 个人主页 -->
+                <li>
+                  <a class="dropdown-item" th:href="@{/user/profile}">
+                    <i class="bi bi-person"></i> 个人主页
+                  </a>
+                </li>
+                <!-- 卖家中心 -->
+                <li sec:authorize="hasRole('SELLER')">
+                  <a class="dropdown-item" th:href="@{/seller/dashboard}">
+                    <i class="bi bi-shop"></i> 卖家中心
+                  </a>
+                </li>
+                <!-- 管理员后台入口 -->
+                <li sec:authorize="hasRole('ADMIN')">
+                  <a class="dropdown-item" th:href="@{/admin/dashboard}">
+                    <i class="bi bi-shield-lock"></i> 管理后台
+                  </a>
+                </li>
+                <li>
+                  <hr class="dropdown-divider">
+                </li>
+                <!-- 退出登录 -->
+                <li>
+                  <form th:action="@{/auth/logout}" method="post" class="dropdown-item">
+                    <button type="submit" class="btn btn-link text-danger p-0">
+                      <i class="bi bi-box-arrow-right"></i> 退出登录
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </li>
+
+            <!-- 未登录用户 -->
+            <li class="nav-item" sec:authorize="!isAuthenticated()">
+              <a class="nav-link" th:href="@{/auth/login}">
+                <i class="bi bi-box-arrow-in-right"></i> 登录
+              </a>
+            </li>
+            <li class="nav-item" sec:authorize="!isAuthenticated()">
+              <a class="nav-link" th:href="@{/auth/register}">
+                <i class="bi bi-person-plus"></i> 注册
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 初始化下拉菜单的JavaScript代码 -->
+    <script th:inline="javascript">
+      document.addEventListener('DOMContentLoaded', function () {
+        // 初始化所有下拉菜单
+        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+        var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+          return new bootstrap.Dropdown(dropdownToggleEl);
+        });
+      });
+    </script>
+  </header>
+</body>
+
+</html>
